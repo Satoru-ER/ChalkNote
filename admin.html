@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>管理者ページ</title>
+</head>
+<body>
+<h1>管理者ページ (VIP専用)</h1>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+    {% for msg in messages %}
+      <li>{{ msg }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<h2>アップロード</h2>
+<form method="post" enctype="multipart/form-data">
+    パスワード: <input type="password" name="password" required><br>
+    ファイル: <input type="file" name="file">
+    <button type="submit">アップロード</button>
+</form>
+
+<h2>削除</h2>
+<form method="post">
+    パスワード: <input type="password" name="password" required><br>
+    削除するファイル名:
+    <select name="delete">
+        {% for f in boards %}
+        <option value="{{ f }}">{{ f }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">削除</button>
+</form>
+
+<a href="{{ url_for('index') }}">戻る</a>
+</body>
+</html>

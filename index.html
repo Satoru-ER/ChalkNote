@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>黒板一覧</title>
+</head>
+<body>
+<h1>黒板写真一覧</h1>
+
+<ul>
+    {% for f in boards %}
+    <li><a href="{{ url_for('blackboard_file', filename=f) }}">{{ f }}</a></li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('admin') }}">管理者ページ</a><br>
+<a href="{{ url_for('nas') }}">NAS</a>
+</body>
+</html>
