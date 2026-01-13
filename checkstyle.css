@@ -15,3 +15,10 @@
   margin-bottom: 15px;
   background-color: #fff;
 }
+.button-row {
+  display: flex;           /* 横並びにする */
+  gap: 15px;               /* ボタン間の隙間 */
+  justify-content: center; /* 中央寄せ */
+  margin-top: 20px;        /* 上との間隔 */
+  flex-wrap: wrap;         /* 狭い画面は折り返し */
+}
