@@ -1,5 +1,6 @@
 .container {
   width: 85%;       /* 横幅 */
+  height: 85%;
   padding: 2vw;      /* 内側余白 */
   border: 2px solid #333; /* 枠線 */
   border-radius: 10px;     /* 角丸 */
