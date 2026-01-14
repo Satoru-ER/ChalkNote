@@ -35,7 +35,7 @@
             const btn = document.getElementById("agreeButton");
                 btn.addEventListener("click", () => {
                 // 遷移先のHTMLファイル名
-            window.location.href = "index/index.html"; // これで別画面に飛ぶ  
+            window.location.href = "{{ url_for('app_index') }}"; // これで別画面に飛ぶ  
             });
         </script>
     </body>

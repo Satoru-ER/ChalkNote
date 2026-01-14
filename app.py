@@ -28,7 +28,7 @@ def consent():
     return render_template('consent.html')
 
 @app.route('/app')
-def index():
+def app_index():
     # boardsを辞書型にする（フォルダ→ファイルリスト）
     folders = {}
     for folder_name in os.listdir(BLACKBOARD_FOLDER):
