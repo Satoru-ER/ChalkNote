@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>黒板アプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<h1>黒板写真一覧</h1>
+
+<div id="folder-container">
+    {% for folder in folders %}
+        <div class="folder-tile" onclick="openFolder('{{ folder }}')">{{ folder }}</div>
+    {% endfor %}
+</div>
+
+<div id="tile-container" style="display:none;"></div>
+
+<div id="full-image-view" style="display:none;">
+    <span onclick="closeFullImage()" style="cursor:pointer;position:absolute;top:10px;right:20px;font-size:30px;color:white;">×</span>
+    <img id="full-img" src="" style="max-width:90%; max-height:90%;">
+</div>
+
+<script>
+const folderData = {{ folders|tojson|safe }};
+
+function openFolder(folderName){
+    const tileContainer = document.getElementById("tile-container");
+    tileContainer.innerHTML = "";
+
+    const images = folderData[folderName] || [];
+
+    images.forEach(file => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.innerHTML = `<img src="/blackboards/${folderName}/${file}" style="width:100%;height:auto;">`;
+        tile.onclick = () => openFullImage(folderName, file);
+        tileContainer.appendChild(tile);
+    });
+
+    document.getElementById("folder-container").style.display = "none";
+    tileContainer.style.display = "flex";
+}
+
+function openFullImage(folder, file){
+    const img = document.getElementById("full-img");
+    img.src = `/blackboards/${folder}/${file}`;
+    document.getElementById("full-image-view").style.display = "flex";
+}
+
+function closeFullImage(){
+    document.getElementById("full-image-view").style.display = "none";
+}
+</script>
+</body>
+</html>

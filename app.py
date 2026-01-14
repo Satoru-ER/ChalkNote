@@ -24,9 +24,18 @@ def get_nas_size():
 
 # --- ルート ---
 @app.route('/')
+def consent():
+    return render_template('consent.html')
+
+@app.route('/app')
 def index():
-    boards = os.listdir(BLACKBOARD_FOLDER)
-    return render_template('index.html', boards=boards)
+    # boardsを辞書型にする（フォルダ→ファイルリスト）
+    folders = {}
+    for folder_name in os.listdir(BLACKBOARD_FOLDER):
+        folder_path = os.path.join(BLACKBOARD_FOLDER, folder_name)
+        if os.path.isdir(folder_path):
+            folders[folder_name] = os.listdir(folder_path)
+    return render_template('app_index.html', folders=folders)
 
 # --- Admin ---
 @app.route('/admin', methods=['GET', 'POST'])
