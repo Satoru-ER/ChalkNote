@@ -1,4 +1,4 @@
-.body {
+body {
   background-color: #383a5d;
 }
 
@@ -10,6 +10,7 @@
   border-radius: 10px;     /* 角丸 */
   background-color: #3a3a3a; /* 背景色 */
   margin: 50px auto;       /* 中央に配置 */
+  color: white;
 }
 
 /* 中の文字ボックス */
@@ -21,6 +22,7 @@
   padding: 10px;
   margin-bottom: 15px;
   background-color: #7a7a7a;
+  color: white;
 }
 .button-row {
   display: flex;           /* 横並びにする */
