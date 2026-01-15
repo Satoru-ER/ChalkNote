@@ -3,6 +3,7 @@
 <head>
     <title>黒板アプリ</title>
     <link rel="stylesheet" href="../static/style.css">
+    <script type="module" crossorigin src="https://glass.danilofiumi.com/web-comps/boundle.js"></script>
 </head>
 <body>
 <h1>黒板写真一覧</h1>
@@ -18,6 +19,14 @@
 <div id="full-image-view" style="display:none;">
     <span onclick="closeFullImage()" style="cursor:pointer;position:absolute;top:10px;right:20px;font-size:30px;color:white;">×</span>
     <img id="full-img" src="" style="max-width:90%; max-height:90%;">
+</div>
+
+<div id="button-layer">
+    <sv-liquid-glass class="liquid-btn" id="btnback" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"←","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
+    <sv-liquid-glass class="liquid-btn" id="btnhome" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"🏠️","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
+    <sv-liquid-glass class="liquid-btn" id="btnfolder" styles='{"style":{"roundness":60,"padding_x":10,"padding_y":1},"text":{"content":"","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
+    <sv-liquid-glass class="liquid-btn" id="btnsettings" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"⚙","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
+    <sv-liquid-glass class="liquid-btn" id="btninfo" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"I","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
 </div>
 
 <a href="{{ url_for('admin') }}">ICT係専用ページへ</a>

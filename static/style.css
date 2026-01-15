@@ -1,0 +1,21 @@
+body{
+    background-color: darkblue;
+}
+
+.tile-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  position: relative; /* ボタン絶対配置の基準 */
+}
+
+.button-layer {
+  position: absolute;   /* タイルの上に乗せる */
+  bottom: 16px;         /* 下部に固定 */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;            /* ボタン間の間隔 */
+  z-index: 10;          /* タイルより手前に表示 */
+}
