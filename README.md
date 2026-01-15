@@ -1,2 +1,2 @@
-# BlackBoard-app-Beta-
-黒板を記録するアプリ
+# Chalkly
+黒板写真を記録するアプリ
