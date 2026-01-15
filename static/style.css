@@ -1,21 +1,26 @@
-body{
-    background-color: darkblue;
+body {
+    background-color: #00008B; /* 青背景 */
+    color: #fff; /* 文字色白に */
+    margin: 0;
+    font-family: sans-serif;
 }
 
+/* タイル群 */
 .tile-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-  padding: 16px;
-  position: relative; /* ボタン絶対配置の基準 */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    position: relative; /* 下部ボタン絶対配置の基準 */
 }
 
+/* 下部ボタンレイヤー */
 .button-layer {
-  position: absolute;   /* タイルの上に乗せる */
-  bottom: 16px;         /* 下部に固定 */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 12px;            /* ボタン間の間隔 */
-  z-index: 10;          /* タイルより手前に表示 */
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; /* 横並びにする */
+    gap: 12px;
+    z-index: 10; /* タイルより前面に */
 }
