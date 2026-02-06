@@ -86,7 +86,7 @@ def nas_download(filename):
     return send_from_directory(NAS_FOLDER, filename, as_attachment=True)
 
 # --- 黒板ファイル表示 ---
-@app.route('/blackboards/<filename>')
+@app.route('/blackboards/<path:filename>')
 def blackboard_file(filename):
     return send_from_directory(BLACKBOARD_FOLDER, filename)
 
