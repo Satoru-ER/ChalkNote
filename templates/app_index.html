@@ -10,22 +10,43 @@
 <div class="page-shell">
     <header class="page-header glass-panel">
         <h1>黒板写真一覧</h1>
-        <p>フォルダを選択して、写真をすばやく確認できます。</p>
+        <p>教科別に写真を探して、すばやく確認できます。</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">教科フォルダ数</span>
+                <strong class="stat-value">{{ total_subjects }}</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">登録画像数</span>
+                <strong class="stat-value">{{ total_images }}</strong>
+            </div>
+        </div>
+
+        <details class="quick-help">
+            <summary>使い方（UXガイド）</summary>
+            <ul>
+                <li>検索欄で教科名を絞り込みできます。</li>
+                <li>画像表示中は「Esc」キーでも閉じられます。</li>
+                <li>最後に開いた教科フォルダを次回自動で再表示します。</li>
+            </ul>
+        </details>
+
         <div class="top-actions">
             <a class="glass-button" href="{{ url_for('admin') }}">ICT係専用ページ</a>
-            <a class="glass-button" href="{{ url_for('nas') }}">NASを開く</a>
+            <a class="glass-button" href="{{ url_for('logout') }}">ログアウト</a>
         </div>
     </header>
 
     <section class="glass-panel" style="padding:16px;">
-        <input id="folder-search" class="search-bar" placeholder="フォルダを検索（例: science）" />
+        <input id="folder-search" class="search-bar" placeholder="教科フォルダを検索（例: science）" />
         <div id="folder-container"></div>
         <div id="tile-container" style="display:none;"></div>
         <p id="path-indicator" class="folder-meta" style="margin: 12px 0 0; display:none;"></p>
     </section>
 
     <div id="button-layer">
-        <button class="glass-button" id="btnback" style="display:none;">← 戻る</button>
+        <button class="glass-button" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
         <button class="glass-button" id="btnhome">🏠 ホーム</button>
     </div>
 </div>
@@ -48,7 +69,7 @@ const pathIndicator = document.getElementById("path-indicator");
 const modal = document.getElementById("full-image-view");
 const fullImg = document.getElementById("full-img");
 
-let currentFolder = null;
+const LAST_FOLDER_KEY = "chalkly-last-folder";
 
 function renderFolders(query = "") {
     folderContainer.innerHTML = "";
@@ -57,7 +78,7 @@ function renderFolders(query = "") {
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     if (entries.length === 0) {
-        folderContainer.innerHTML = '<div class="empty-state">該当するフォルダがありません。</div>';
+        folderContainer.innerHTML = '<div class="empty-state">該当する教科フォルダがありません。</div>';
         return;
     }
 
@@ -74,13 +95,12 @@ function renderFolders(query = "") {
 }
 
 function openFolder(folderName){
-    currentFolder = folderName;
     tileContainer.innerHTML = "";
 
     const images = folderData[folderName] || [];
 
     if (images.length === 0) {
-      tileContainer.innerHTML = '<div class="empty-state">このフォルダには画像がありません。</div>';
+      tileContainer.innerHTML = '<div class="empty-state">この教科フォルダには画像がありません。</div>';
     } else {
       images.forEach(file => {
           const tile = document.createElement("div");
@@ -91,6 +111,7 @@ function openFolder(folderName){
       });
     }
 
+    localStorage.setItem(LAST_FOLDER_KEY, folderName);
     folderContainer.style.display = "none";
     tileContainer.style.display = "grid";
     btnBack.style.display = "inline-block";
@@ -99,7 +120,6 @@ function openFolder(folderName){
 }
 
 function goHome() {
-    currentFolder = null;
     folderContainer.style.display = "grid";
     tileContainer.style.display = "none";
     btnBack.style.display = "none";
@@ -115,6 +135,20 @@ function openFullImage(folder, file){
 function closeFullImage(){
     modal.style.display = "none";
     fullImg.src = "";
+}
+
+searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
+btnBack.addEventListener("click", goHome);
+btnHome.addEventListener("click", goHome);
+document.getElementById("close-modal").addEventListener("click", closeFullImage);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
+
+renderFolders();
+
+const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
+if (lastFolder && folderData[lastFolder]) {
+    openFolder(lastFolder);
 }
 
 searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
