@@ -152,6 +152,13 @@ def admin():
     return render_template('admin.html', boards=boards, subjects=subjects)
 
 
+
+
+@app.route('/nas')
+def nas():
+    flash("NAS機能は廃止されました。黒板一覧をご利用ください。")
+    return redirect(url_for('app_index'))
+
 # --- 黒板ファイル表示 ---
 @app.route('/blackboards/<path:filename>')
 def blackboard_file(filename):
