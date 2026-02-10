@@ -46,6 +46,24 @@ def is_valid_uuid(value):
         return False
 
 
+def list_blackboard_subjects():
+    subjects = []
+    for name in os.listdir(BLACKBOARD_FOLDER):
+        path = os.path.join(BLACKBOARD_FOLDER, name)
+        if os.path.isdir(path):
+            subjects.append(name)
+    return sorted(subjects)
+
+def list_blackboard_entries():
+    entries = []
+    for subject in list_blackboard_subjects():
+        subject_path = os.path.join(BLACKBOARD_FOLDER, subject)
+        for filename in os.listdir(subject_path):
+            file_path = os.path.join(subject_path, filename)
+            if os.path.isfile(file_path):
+                entries.append(f"{subject}/{filename}")
+    return sorted(entries)
+
 # --- ルート ---
 @app.route('/')
 def consent():
