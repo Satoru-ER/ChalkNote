@@ -2,65 +2,129 @@
 <html>
 <head>
     <title>黒板アプリ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../static/style.css">
     <script type="module" crossorigin src="https://glass.danilofiumi.com/web-comps/boundle.js"></script>
 </head>
 <body>
-<h1>黒板写真一覧</h1>
+<div class="page-shell">
+    <header class="page-header glass-panel">
+        <h1>黒板写真一覧</h1>
+        <p>フォルダを選択して、写真をすばやく確認できます。</p>
+        <div class="top-actions">
+            <a class="glass-button" href="{{ url_for('admin') }}">ICT係専用ページ</a>
+            <a class="glass-button" href="{{ url_for('nas') }}">NASを開く</a>
+        </div>
+    </header>
 
-<div id="folder-container">
-    {% for folder in folders %}
-        <div class="folder-tile" onclick="openFolder('{{ folder }}')">{{ folder }}</div>
-    {% endfor %}
+    <section class="glass-panel" style="padding:16px;">
+        <input id="folder-search" class="search-bar" placeholder="フォルダを検索（例: science）" />
+        <div id="folder-container"></div>
+        <div id="tile-container" style="display:none;"></div>
+        <p id="path-indicator" class="folder-meta" style="margin: 12px 0 0; display:none;"></p>
+    </section>
+
+    <div id="button-layer">
+        <button class="glass-button" id="btnback" style="display:none;">← 戻る</button>
+        <button class="glass-button" id="btnhome">🏠 ホーム</button>
+    </div>
 </div>
 
-<div id="tile-container" style="display:none;"></div>
-
-<div id="full-image-view" style="display:none;">
-    <span onclick="closeFullImage()" style="cursor:pointer;position:absolute;top:10px;right:20px;font-size:30px;color:white;">×</span>
-    <img id="full-img" src="" style="max-width:90%; max-height:90%;">
+<div id="full-image-view">
+    <div class="modal-card glass-panel">
+        <button id="close-modal" class="glass-button">閉じる</button>
+        <img id="full-img" src="" alt="黒板画像">
+    </div>
 </div>
-
-<div id="button-layer">
-    <sv-liquid-glass class="liquid-btn" id="btnback" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"←","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnhome" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"🏠️","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnfolder" styles='{"style":{"roundness":60,"padding_x":10,"padding_y":1},"text":{"content":"blackboards/science","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnsettings" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"⚙","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btninfo" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"I","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-</div>
-
-<a href="{{ url_for('admin') }}">ICT係専用ページへ</a>
 
 <script>
 const folderData = {{ folders|tojson|safe }};
+const folderContainer = document.getElementById("folder-container");
+const tileContainer = document.getElementById("tile-container");
+const searchInput = document.getElementById("folder-search");
+const btnBack = document.getElementById("btnback");
+const btnHome = document.getElementById("btnhome");
+const pathIndicator = document.getElementById("path-indicator");
+const modal = document.getElementById("full-image-view");
+const fullImg = document.getElementById("full-img");
+
+let currentFolder = null;
+
+function renderFolders(query = "") {
+    folderContainer.innerHTML = "";
+    const entries = Object.entries(folderData)
+      .filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    if (entries.length === 0) {
+        folderContainer.innerHTML = '<div class="empty-state">該当するフォルダがありません。</div>';
+        return;
+    }
+
+    entries.forEach(([folderName, files]) => {
+        const tile = document.createElement("button");
+        tile.className = "folder-tile";
+        tile.innerHTML = `
+            <span class="folder-name">${folderName}</span>
+            <span class="folder-meta">${files.length} 件の画像</span>
+        `;
+        tile.onclick = () => openFolder(folderName);
+        folderContainer.appendChild(tile);
+    });
+}
 
 function openFolder(folderName){
-    const tileContainer = document.getElementById("tile-container");
+    currentFolder = folderName;
     tileContainer.innerHTML = "";
 
     const images = folderData[folderName] || [];
 
-    images.forEach(file => {
-        const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.innerHTML = `<img src="/blackboards/${folderName}/${file}" style="width:100%;height:auto;">`;
-        tile.onclick = () => openFullImage(folderName, file);
-        tileContainer.appendChild(tile);
-    });
+    if (images.length === 0) {
+      tileContainer.innerHTML = '<div class="empty-state">このフォルダには画像がありません。</div>';
+    } else {
+      images.forEach(file => {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.innerHTML = `<img src="/blackboards/${folderName}/${file}" alt="${file}">`;
+          tile.onclick = () => openFullImage(folderName, file);
+          tileContainer.appendChild(tile);
+      });
+    }
 
-    document.getElementById("folder-container").style.display = "none";
-    tileContainer.style.display = "flex";
+    folderContainer.style.display = "none";
+    tileContainer.style.display = "grid";
+    btnBack.style.display = "inline-block";
+    pathIndicator.style.display = "block";
+    pathIndicator.textContent = `現在: blackboards/${folderName}`;
+}
+
+function goHome() {
+    currentFolder = null;
+    folderContainer.style.display = "grid";
+    tileContainer.style.display = "none";
+    btnBack.style.display = "none";
+    pathIndicator.style.display = "none";
 }
 
 function openFullImage(folder, file){
-    const img = document.getElementById("full-img");
-    img.src = `/blackboards/${folder}/${file}`;
-    document.getElementById("full-image-view").style.display = "flex";
+    fullImg.src = `/blackboards/${folder}/${file}`;
+    fullImg.alt = file;
+    modal.style.display = "flex";
 }
 
 function closeFullImage(){
-    document.getElementById("full-image-view").style.display = "none";
+    modal.style.display = "none";
+    fullImg.src = "";
 }
+
+searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
+btnBack.addEventListener("click", goHome);
+btnHome.addEventListener("click", goHome);
+document.getElementById("close-modal").addEventListener("click", closeFullImage);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
+
+renderFolders();
 </script>
 </body>
 </html>

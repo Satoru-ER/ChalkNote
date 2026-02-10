@@ -2,33 +2,46 @@
 <html>
 <head>
     <title>NAS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-<h2>NASファイル一覧</h2>
+<div class="page-shell">
+  <section class="page-header glass-panel">
+    <h2>NASファイル一覧</h2>
+    <p>学校内共有ファイルを保存・ダウンロードできます。</p>
+  </section>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul>
-    {% for msg in messages %}
-      <li>{{ msg }}</li>
-    {% endfor %}
+  <section class="glass-panel" style="padding:16px;">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-list">
+        {% for msg in messages %}
+          <li>{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <ul class="nas-list">
+        {% for f in files %}
+        <li class="nas-item">
+          <span>{{ f }}</span>
+          <a class="glass-button" href="{{ url_for('nas_download', filename=f) }}">ダウンロード</a>
+        </li>
+        {% else %}
+        <li class="empty-state">まだファイルがありません。</li>
+        {% endfor %}
     </ul>
-  {% endif %}
-{% endwith %}
 
-<ul>
-    {% for f in files %}
-    <li><a href="{{ url_for('nas_download', filename=f) }}">{{ f }}</a></li>
-    {% endfor %}
-</ul>
+    <h3>アップロード</h3>
+    <form method="post" enctype="multipart/form-data" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" name="file">
+        <button type="submit">アップロード</button>
+    </form>
 
-<h3>アップロード</h3>
-<form method="post" enctype="multipart/form-data">
-    <input type="file" name="file">
-    <button type="submit">アップロード</button>
-</form>
-
-<a href="{{ url_for('index') }}">戻る</a>
+    <a class="glass-button" href="{{ url_for('app_index') }}">← 一覧へ戻る</a>
+  </section>
+</div>
 </body>
 </html>
