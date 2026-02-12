@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ログイン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../static/style.css">
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+</head>
+<body>
+<div class="page-shell">
+  <section class="page-header glass-panel">
+    <h1>ログイン</h1>
+    <p>QRコード（UUID）と6桁PINで認証します。管理者は管理者ホーム、先生は先生ページへ遷移します。</p>
+  </section>
+
+  <section class="glass-panel" style="padding:16px;">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-list">
+        {% for msg in messages %}
+          <li>{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div style="display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+      <div>
+        <h3>カメラでQRを読み取り</h3>
+        <div id="qr-reader" style="width:100%; max-width:360px;"></div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="start-camera" type="button">カメラ開始</button>
+          <button id="stop-camera" type="button">停止</button>
+        </div>
+      </div>
+
+      <form method="post" style="display:grid; gap:10px; align-content:start;">
+        <input type="hidden" name="next" value="{{ next_url }}" />
+
+        <label for="qr_uuid">UUID（QRコード / 手入力）</label>
+        <input id="qr_uuid" name="qr_uuid" class="search-bar" placeholder="例: 123e4567-e89b-12d3-a456-426614174000" required>
+
+        <label for="pin">6桁PIN</label>
+        <input id="pin" name="pin" class="search-bar" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required>
+
+        <button type="submit">ログイン</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script>
+let scanner = null;
+let scannerStarted = false;
+
+function normalizeUuid(text) {
+  return (text || '').trim().toLowerCase();
+}
+
+function fillUuid(value) {
+  document.getElementById('qr_uuid').value = normalizeUuid(value);
+}
+
+async function startScanner() {
+  if (!window.Html5Qrcode) {
+    alert('QRスキャナーを読み込めませんでした。手入力をご利用ください。');
+    return;
+  }
+
+  if (!scanner) {
+    scanner = new Html5Qrcode('qr-reader');
+  }
+  if (scannerStarted) {
+    return;
+  }
+
+  try {
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        fillUuid(decodedText);
+      },
+      () => {}
+    );
+    scannerStarted = true;
+  } catch (error) {
+    alert('カメラの起動に失敗しました。手入力をご利用ください。');
+  }
+}
+
+async function stopScanner() {
+  if (!scanner || !scannerStarted) {
+    return;
+  }
+  await scanner.stop();
+  scannerStarted = false;
+}
+
+document.getElementById('start-camera').addEventListener('click', startScanner);
+document.getElementById('stop-camera').addEventListener('click', stopScanner);
+window.addEventListener('beforeunload', stopScanner);
+</script>
+</body>
+</html>
