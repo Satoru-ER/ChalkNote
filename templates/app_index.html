@@ -203,6 +203,29 @@ const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
 if (lastFolder && folderData[lastFolder]) {
     openFolder(lastFolder);
 }
+
+searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
+btnBack.addEventListener("click", goHome);
+btnHome.addEventListener("click", goHome);
+document.getElementById("close-modal").addEventListener("click", closeFullImage);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
+
+renderFolders();
+
+const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
+if (lastFolder && folderData[lastFolder]) {
+    openFolder(lastFolder);
+}
+
+searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
+btnBack.addEventListener("click", goHome);
+btnHome.addEventListener("click", goHome);
+document.getElementById("close-modal").addEventListener("click", closeFullImage);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
+
+renderFolders();
 </script>
 </body>
 </html>
