@@ -27,6 +27,10 @@
     <div style="display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
       <div>
         <h3>カメラでQRを読み取り</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap; margin-bottom:8px;">
+          <select id="camera-select" class="search-bar" style="margin:0; min-width: 220px;"></select>
+          <button id="reload-cameras" type="button">カメラ再取得</button>
+        </div>
         <div id="qr-reader" style="width:100%; max-width:360px;"></div>
         <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
           <button id="start-camera" type="button">カメラ開始</button>
@@ -34,7 +38,7 @@
         </div>
       </div>
 
-      <form method="post" style="display:grid; gap:10px; align-content:start;">
+      <form id="login-form" method="post" style="display:grid; gap:10px; align-content:start;">
         <input type="hidden" name="next" value="{{ next_url }}" />
 
         <label for="qr_uuid">UUID（QRコード / 手入力）</label>
@@ -42,6 +46,11 @@
 
         <label for="pin">6桁PIN</label>
         <input id="pin" name="pin" class="search-bar" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required>
+
+        <label style="display:flex;gap:8px;align-items:center;">
+          <input type="checkbox" id="remember-login" checked>
+          2日間ログイン情報を保持する
+        </label>
 
         <button type="submit">ログイン</button>
       </form>
@@ -52,6 +61,8 @@
 <script>
 let scanner = null;
 let scannerStarted = false;
+const STORAGE_KEY = 'chalkly-login-cache';
+const STORAGE_TTL_MS = 2 * 24 * 60 * 60 * 1000;
 
 function normalizeUuid(text) {
   return (text || '').trim().toLowerCase();
@@ -59,6 +70,33 @@ function normalizeUuid(text) {
 
 function fillUuid(value) {
   document.getElementById('qr_uuid').value = normalizeUuid(value);
+}
+
+async function loadCameraList() {
+  const select = document.getElementById('camera-select');
+  select.innerHTML = '';
+
+  if (!window.Html5Qrcode) {
+    select.innerHTML = '<option>QRライブラリ未読込</option>';
+    return;
+  }
+
+  try {
+    const devices = await Html5Qrcode.getCameras();
+    if (!devices.length) {
+      select.innerHTML = '<option>カメラが見つかりません</option>';
+      return;
+    }
+
+    devices.forEach((device, i) => {
+      const opt = document.createElement('option');
+      opt.value = device.id;
+      opt.textContent = device.label || `Camera ${i + 1}`;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    select.innerHTML = '<option>カメラ一覧取得に失敗</option>';
+  }
 }
 
 async function startScanner() {
@@ -74,9 +112,12 @@ async function startScanner() {
     return;
   }
 
+  const selectedCamera = document.getElementById('camera-select').value;
+  const cameraConfig = selectedCamera ? { deviceId: { exact: selectedCamera } } : { facingMode: 'environment' };
+
   try {
     await scanner.start(
-      { facingMode: 'environment' },
+      cameraConfig,
       { fps: 10, qrbox: { width: 220, height: 220 } },
       (decodedText) => {
         fillUuid(decodedText);
@@ -97,9 +138,62 @@ async function stopScanner() {
   scannerStarted = false;
 }
 
+function saveLoginCache() {
+  const remember = document.getElementById('remember-login').checked;
+  if (!remember) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+
+  const payload = {
+    uuid: normalizeUuid(document.getElementById('qr_uuid').value),
+    pin: document.getElementById('pin').value.trim(),
+    expiresAt: Date.now() + STORAGE_TTL_MS,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadLoginCache() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.expiresAt || Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (e) {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+function tryAutoLogin() {
+  const cached = loadLoginCache();
+  if (!cached) return;
+
+  document.getElementById('qr_uuid').value = cached.uuid || '';
+  document.getElementById('pin').value = cached.pin || '';
+  document.getElementById('remember-login').checked = true;
+
+  if (!sessionStorage.getItem('auto-login-tried') && cached.uuid && cached.pin) {
+    sessionStorage.setItem('auto-login-tried', '1');
+    document.getElementById('login-form').requestSubmit();
+  }
+}
+
 document.getElementById('start-camera').addEventListener('click', startScanner);
 document.getElementById('stop-camera').addEventListener('click', stopScanner);
+document.getElementById('reload-cameras').addEventListener('click', loadCameraList);
+document.getElementById('login-form').addEventListener('submit', saveLoginCache);
 window.addEventListener('beforeunload', stopScanner);
+
+window.addEventListener('load', async () => {
+  await loadCameraList();
+  tryAutoLogin();
+});
 </script>
 </body>
 </html>

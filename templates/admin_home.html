@@ -62,6 +62,8 @@
         <button type="submit" name="action" value="disallow_uuid">許可削除</button>
         <button type="submit" name="action" value="comment_ban_uuid">コメント禁止</button>
         <button type="submit" name="action" value="comment_unban_uuid">コメント禁止解除</button>
+        <button type="submit" name="action" value="lock_uuid">一時ロック</button>
+        <button type="submit" name="action" value="unlock_uuid">ロック解除</button>
       </div>
     </form>
 
@@ -93,6 +95,17 @@
     <ul>
       {% for u in access_control.comment_banned %}
       <li>{{ u }}</li>
+      {% else %}
+      <li>なし</li>
+      {% endfor %}
+    </ul>
+
+
+
+    <h3>一時ロックUUID</h3>
+    <ul>
+      {% for u in access_control.locked_accounts %}
+      <li>{{ u }}{% if access_control.incident_counts.get(u) %}（違反回数: {{ access_control.incident_counts.get(u) }}）{% endif %}</li>
       {% else %}
       <li>なし</li>
       {% endfor %}

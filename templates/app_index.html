@@ -150,7 +150,7 @@ async function loadComments(imageKey) {
         return;
     }
     commentList.innerHTML = rows.map(c =>
-      `<li><strong>${c.author_uuid}</strong><br>${c.text}<br><small>${new Date(c.created_at).toLocaleString()}</small></li>`
+      `<li><strong>${c.author_uuid}</strong>${c.deleted ? ' <em>(moderated)</em>' : ''}<br>${c.text}<br><small>${new Date(c.created_at).toLocaleString()}</small></li>`
     ).join('');
 }
 
@@ -166,6 +166,42 @@ function closeFullImage(){
     modal.style.display = "none";
     fullImg.src = "";
     activeImageKey = null;
+}
+
+commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!activeImageKey) return;
+
+    const formData = new URLSearchParams();
+    formData.set('image', activeImageKey);
+    formData.set('text', commentText.value.trim());
+
+    const res = await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      alert(json.error || 'コメント投稿に失敗しました');
+      return;
+    }
+    commentText.value = '';
+    loadComments(activeImageKey);
+});
+
+searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
+btnBack.addEventListener("click", goHome);
+btnHome.addEventListener("click", goHome);
+document.getElementById("close-modal").addEventListener("click", closeFullImage);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
+
+renderFolders();
+
+const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
+if (lastFolder && folderData[lastFolder]) {
+    openFolder(lastFolder);
 }
 
 commentForm.addEventListener('submit', async (e) => {
