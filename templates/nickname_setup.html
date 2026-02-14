@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ニックネーム設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+<div class="page-shell">
+  <section class="page-header glass-panel">
+    <h1>ニックネーム設定</h1>
+    <p>初回ログイン時に設定が必要です。変更は週1回・最大5回です。</p>
+  </section>
+  <section class="glass-panel" style="padding:16px;">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <ul class="flash-list">
+        {% for msg in messages %}
+        <li>{{ msg }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% if info %}
+    <p>現在のニックネーム: <strong>{{ info.nickname }}</strong></p>
+    <p>残り変更回数: {{ status.remaining }}</p>
+    {% endif %}
+
+    <form method="post" style="display:grid;gap:10px;max-width:420px;">
+      <input type="hidden" name="next" value="{{ next_url }}" />
+      <label>ニックネーム（2〜20文字）</label>
+      <input type="text" name="nickname" class="search-bar" minlength="2" maxlength="20" required>
+      <button type="submit" class="glass-button">保存</button>
+    </form>
+  </section>
+</div>
+</body>
+</html>

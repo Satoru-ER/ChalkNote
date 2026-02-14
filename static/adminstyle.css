@@ -15,10 +15,7 @@ body {
   background: radial-gradient(circle at 30% 20%, #314c87, #09101f 58%);
 }
 
-.page-shell {
-  width: min(920px, 94vw);
-  margin: 24px auto;
-}
+.page-shell { width: min(1100px, 94vw); margin: 24px auto; }
 
 .glass-panel {
   background: var(--glass-bg);
@@ -30,24 +27,51 @@ body {
   padding: 18px;
 }
 
-h1,h2 { margin-top: 0; }
+h1,h2,h3 { margin-top: 0; }
 
-form {
+.admin-grid-two {
   display: grid;
-  gap: 10px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-input, select, button {
+.panel-sub {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: rgba(255,255,255,.08);
+  padding: 12px;
+}
+
+.admin-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.kpi-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.12);
+}
+.kpi-card span { color: var(--muted); display: block; }
+.kpi-card strong { font-size: 1.35rem; }
+
+form { display: grid; gap: 10px; margin-bottom: 12px; }
+
+input, select, button, .download-btn {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: rgba(255,255,255,0.14);
   color: var(--text);
 }
-
 button { cursor: pointer; }
 button:hover { background: rgba(255,255,255,0.25); }
+
+.btn-wrap { display:flex; gap:8px; flex-wrap:wrap; }
 
 .flash-list {
   list-style: none;
@@ -64,10 +88,8 @@ button:hover { background: rgba(255,255,255,0.25); }
   background: rgba(255, 246, 178, 0.2);
 }
 
-a {
-  color: #edf4ff;
-}
-
+a { color: #edf4ff; }
+.download-btn { text-decoration:none; display:inline-block; }
 
 .folder-grid {
   display: grid;
