@@ -1,34 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>NAS</title>
-    <link rel="stylesheet" href="../static/style.css">
+  <title>NAS機能について</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-<h2>NASファイル一覧</h2>
-
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul>
-    {% for msg in messages %}
-      <li>{{ msg }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-
-<ul>
-    {% for f in files %}
-    <li><a href="{{ url_for('nas_download', filename=f) }}">{{ f }}</a></li>
-    {% endfor %}
-</ul>
-
-<h3>アップロード</h3>
-<form method="post" enctype="multipart/form-data">
-    <input type="file" name="file">
-    <button type="submit">アップロード</button>
-</form>
-
-<a href="{{ url_for('index') }}">戻る</a>
+  <div class="page-shell">
+    <section class="page-header glass-panel">
+      <h1>NAS機能は廃止されました</h1>
+      <p>この機能は現在利用できません。黒板写真一覧をご利用ください。</p>
+      <div class="top-actions">
+        <a class="glass-button" href="{{ url_for('app_index') }}">黒板一覧へ戻る</a>
+      </div>
+    </section>
+  </div>
 </body>
 </html>
