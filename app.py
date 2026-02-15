@@ -22,8 +22,11 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'satoru-secret-key'
+app.secret_key = os.environ.get('APP_SECRET_KEY', 'stable-v1-default-secret-change-in-production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=2)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '0') == '1'
 
 CREDENTIALS_FILE = 'credentials.json'
 BLACKBOARD_FOLDER = 'blackboards'
@@ -33,7 +36,7 @@ NICKNAMES_FILE = 'nicknames.json'
 AUDIT_LOG_FILE = 'audit_log.jsonl'
 
 APP_NAME = 'BlackBoard-app-Beta-'
-APP_VERSION = 'Canary Ver1.0'
+APP_VERSION = 'Stable Ver1.0'
 APP_RELEASE_DATE = '2026-02-15'
 
 LOCK_THRESHOLD = 3
@@ -743,4 +746,7 @@ def blackboard_file(filename):
 
 if __name__ == '__main__':
     ensure_credentials_file()
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    host = os.environ.get('APP_HOST', '0.0.0.0')
+    port = int(os.environ.get('APP_PORT', '8080'))
+    app.run(host=host, port=port, debug=debug_mode)
