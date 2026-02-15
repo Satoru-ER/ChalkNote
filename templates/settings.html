@@ -9,26 +9,38 @@
 <div class="page-shell">
   <section class="page-header glass-panel">
     <h1>設定</h1>
-    <p>通常ユーザー・先生共通の設定画面です。</p>
+    <p>必要な情報だけをまとめた、通常ユーザー・先生向けの共通設定です。</p>
   </section>
 
-  <section class="glass-panel" style="padding:16px; display:grid; gap:12px;">
-    <h2>アプリ詳細</h2>
-    <p>アプリ名: <strong>{{ app_name }}</strong></p>
-    <p>バージョン: <strong>{{ app_version }}</strong></p>
-    <p>リリース日: <strong>{{ app_release_date }}</strong></p>
+  <section class="glass-panel" style="padding:16px;">
+    <div class="settings-grid">
+      <article class="stat-card">
+        <span class="stat-label">アプリ名</span>
+        <strong>{{ app_name }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">バージョン</span>
+        <strong>{{ app_version }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">リリース日</span>
+        <strong>{{ app_release_date }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">ロール</span>
+        <strong>{{ role }}</strong>
+      </article>
+    </div>
 
-    <h2>アカウント情報</h2>
-    <p>ロール: <strong>{{ role }}</strong></p>
+    <h2>アカウント</h2>
     <p>UUID: <code>{{ login_uuid }}</code></p>
     <p>現在のニックネーム: <strong>{{ nickname_info.nickname if nickname_info else '未設定' }}</strong></p>
-    <p>ニックネーム残り変更回数: <strong>{{ nickname_status.remaining }}</strong></p>
+    <p>残り変更回数: <strong>{{ nickname_status.remaining }}</strong></p>
     {% if nickname_status.wait_days == -1 %}
-    <p>ニックネーム変更上限に達しています。</p>
+      <p>ニックネーム変更上限に達しています。</p>
     {% elif not nickname_status.can_change %}
-    <p>次回変更可能まで: {{ nickname_status.wait_days }} 日</p>
+      <p>次回変更可能まで: {{ nickname_status.wait_days }} 日</p>
     {% endif %}
-    <a class="glass-button" href="{{ url_for('nickname_setup', next=url_for('settings')) }}">ユーザー名（ニックネーム）変更</a>
 
     <h2>セキュリティ状態</h2>
     <ul>
@@ -38,6 +50,7 @@
     </ul>
 
     <div class="top-actions">
+      <a class="glass-button" href="{{ url_for('nickname_setup', next=url_for('settings')) }}">ニックネーム変更</a>
       {% if is_teacher %}<a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>{% endif %}
       {% if is_admin %}<a class="glass-button" href="{{ url_for('admin_settings') }}">管理者設定</a>{% endif %}
       <a class="glass-button" href="{{ url_for('app_index') }}">一覧へ戻る</a>
