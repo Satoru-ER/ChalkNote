@@ -36,6 +36,11 @@
             {% if is_admin %}
             <a class="glass-button" href="{{ url_for('admin_home') }}">管理者ホーム</a>
             {% endif %}
+            {% if is_teacher %}
+            <a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>
+            {% endif %}
+            <a class="glass-button" href="{{ url_for('settings') }}">設定</a>
+            <a class="glass-button" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
             <a class="glass-button" href="{{ url_for('logout') }}">ログアウト</a>
         </div>
     </header>
@@ -93,7 +98,7 @@ function renderFolders(query = "") {
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     if (entries.length === 0) {
-        folderContainer.innerHTML = '<div class="empty-state">該当する教科フォルダがありません。</div>';
+        folderContainer.innerHTML = '<div class="empty-state">表示できるフォルダがありません。管理者が写真をアップロードすると表示されます。</div>';
         return;
     }
 

@@ -32,6 +32,10 @@ ACCESS_CONTROL_FILE = 'access_control.json'
 NICKNAMES_FILE = 'nicknames.json'
 AUDIT_LOG_FILE = 'audit_log.jsonl'
 
+APP_NAME = 'BlackBoard-app-Beta-'
+APP_VERSION = 'Canary Ver1.0'
+APP_RELEASE_DATE = '2026-02-15'
+
 LOCK_THRESHOLD = 3
 MAX_NICKNAME_CHANGES = 5
 NICKNAME_CHANGE_INTERVAL_DAYS = 7
@@ -210,13 +214,25 @@ def list_blackboard_entries():
 
 
 def build_folders_data():
+    """教科フォルダ + 直下ファイル(未分類)をまとめて返す。"""
     folders = {}
     total_images = 0
+
     for folder_name in list_blackboard_subjects():
         folder_path = os.path.join(BLACKBOARD_FOLDER, folder_name)
         files = sorted([name for name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, name))])
         folders[folder_name] = files
         total_images += len(files)
+
+    # 旧構成互換: blackboards直下にある画像ファイルを「未分類」として表示
+    root_files = sorted([
+        name for name in os.listdir(BLACKBOARD_FOLDER)
+        if os.path.isfile(os.path.join(BLACKBOARD_FOLDER, name))
+    ])
+    if root_files:
+        folders['未分類'] = root_files
+        total_images += len(root_files)
+
     return folders, total_images
 
 
@@ -446,7 +462,7 @@ def logout():
 @login_required
 def app_index():
     folders, total_images = build_folders_data()
-    return render_template('app_index.html', folders=folders, total_subjects=len(folders), total_images=total_images, is_admin=session.get('role') == 'admin')
+    return render_template('app_index.html', folders=folders, total_subjects=len(folders), total_images=total_images, is_admin=session.get('role') == 'admin', is_teacher=session.get('role') in {'teacher', 'admin'})
 
 
 @app.route('/teacher')
@@ -589,7 +605,14 @@ def admin_home():
 def comments_list():
     image_key = request.args.get('image', '').strip()
     comments = load_json_file(COMMENTS_FILE, {})
-    return jsonify(comments.get(image_key, []))
+    rows = comments.get(image_key, [])
+
+    # 旧データ互換: author_nickname が無い場合は現在のニックネームを補完
+    for row in rows:
+        if not row.get('author_nickname') and row.get('author_uuid'):
+            row['author_nickname'] = get_display_name(row['author_uuid'])
+
+    return jsonify(rows)
 
 
 @app.route('/api/comments', methods=['POST'])
@@ -652,6 +675,57 @@ def comments_add():
     log_operation('comment_add', True, image_key)
     return jsonify({'ok': True})
 
+
+
+
+@app.route('/settings')
+@login_required
+def settings():
+    """通常ユーザー/先生向けの共通設定画面。"""
+    role = session.get('role', 'user')
+    uuid_value = session.get('login_uuid', '')
+    status = nickname_change_status(uuid_value)
+    info = get_nickname_info(uuid_value)
+
+    ac = load_access_control()
+    security_flags = {
+        'locked': uuid_value in ac.get('locked_accounts', []),
+        'comment_banned': uuid_value in ac.get('comment_banned', []),
+        'banned': uuid_value in ac.get('banned', []),
+    }
+
+    return render_template(
+        'settings.html',
+        app_name=APP_NAME,
+        app_version=APP_VERSION,
+        app_release_date=APP_RELEASE_DATE,
+        role=role,
+        login_uuid=uuid_value,
+        nickname_info=info,
+        nickname_status=status,
+        security_flags=security_flags,
+        is_admin=(role == 'admin'),
+        is_teacher=(role in {'teacher', 'admin'}),
+    )
+
+
+@app.route('/admin/settings')
+@admin_required
+def admin_settings():
+    """管理者向け設定画面。"""
+    ac = load_access_control()
+    return render_template(
+        'admin_settings.html',
+        app_name=APP_NAME,
+        app_version=APP_VERSION,
+        app_release_date=APP_RELEASE_DATE,
+        locked_count=len(ac.get('locked_accounts', [])),
+        banned_count=len(ac.get('banned', [])),
+        comment_banned_count=len(ac.get('comment_banned', [])),
+        allowlist_enabled=ac.get('allowlist_enabled', False),
+        allowlist_count=len(ac.get('allowlist', [])),
+        incident_count=len(ac.get('incident_counts', {})),
+    )
 
 @app.route('/nas')
 def nas():
