@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>先生専用ページ</title>
-        <link rel="stylesheet" href="../static/adminstyle.css">
-    </head>
-    <body>
-        <h1>管理者ページ</h1>
-    </body>
+<head>
+    <title>先生専用ページ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../static/adminstyle.css">
+</head>
+<body>
+<div class="page-shell">
+    <section class="glass-panel">
+        <h1>先生専用ページ</h1>
+        <p>先生向けメニューです。通常一覧ページからいつでも戻って再訪できます。</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{{ url_for('app_index') }}">← 一覧に戻る</a>
+            <a href="{{ url_for('teacher') }}">先生ページを再表示</a>
+            <a href="{{ url_for('settings') }}">設定</a>
+            <a href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
+        </div>
+    </section>
+</div>
+</body>
 </html>
