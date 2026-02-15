@@ -1,35 +1,45 @@
-body {
-  background-color: #383a5d;
+:root {
+  --text: #eef3ff;
+  --muted: #c9d3ef;
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.3);
 }
 
+* { box-sizing: border-box; }
 
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 15% 10%, #395b9a, #0d1221 52%);
+}
 
 .container {
-  width: 85%;       /* 横幅 */
-  height: 85%;
-  padding: 2vw;      /* 内側余白 */
-  border: 2px solid #333; /* 枠線 */
-  border-radius: 10px;     /* 角丸 */
-  background-color: #3a3a3a; /* 背景色 */
-  margin: 50px auto;       /* 中央に配置 */
-  color: white;
+  width: min(980px, 94vw);
+  margin: 26px auto;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
 }
 
-/* 中の文字ボックス */
 .text-box {
-  width: 92.5%;
-  height: 70%;
-  border: 1px solid #999;
-  border-radius: 5px;
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: #4f4f4f;
-  color: white;
+  max-height: 58vh;
+  overflow: auto;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,.1);
 }
+
+p, li { color: var(--muted); }
+
 .button-row {
-  display: flex;           /* 横並びにする */
-  gap: 15px;               /* ボタン間の隙間 */
-  justify-content: center; /* 中央寄せ */
-  margin-top: 20px;        /* 上との間隔 */
-  flex-wrap: wrap;         /* 狭い画面は折り返し */
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
 }

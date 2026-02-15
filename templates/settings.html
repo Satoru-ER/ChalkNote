@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+<div class="page-shell">
+  <section class="page-header glass-panel">
+    <h1>設定</h1>
+    <p>通常ユーザー・先生共通の設定画面です。</p>
+  </section>
+
+  <section class="glass-panel" style="padding:16px; display:grid; gap:12px;">
+    <h2>アプリ詳細</h2>
+    <p>アプリ名: <strong>{{ app_name }}</strong></p>
+    <p>バージョン: <strong>{{ app_version }}</strong></p>
+    <p>リリース日: <strong>{{ app_release_date }}</strong></p>
+
+    <h2>アカウント情報</h2>
+    <p>ロール: <strong>{{ role }}</strong></p>
+    <p>UUID: <code>{{ login_uuid }}</code></p>
+    <p>現在のニックネーム: <strong>{{ nickname_info.nickname if nickname_info else '未設定' }}</strong></p>
+    <p>ニックネーム残り変更回数: <strong>{{ nickname_status.remaining }}</strong></p>
+    {% if nickname_status.wait_days == -1 %}
+    <p>ニックネーム変更上限に達しています。</p>
+    {% elif not nickname_status.can_change %}
+    <p>次回変更可能まで: {{ nickname_status.wait_days }} 日</p>
+    {% endif %}
+    <a class="glass-button" href="{{ url_for('nickname_setup', next=url_for('settings')) }}">ユーザー名（ニックネーム）変更</a>
+
+    <h2>セキュリティ状態</h2>
+    <ul>
+      <li>一時ロック: {{ 'ON' if security_flags.locked else 'OFF' }}</li>
+      <li>コメント禁止: {{ 'ON' if security_flags.comment_banned else 'OFF' }}</li>
+      <li>出禁: {{ 'ON' if security_flags.banned else 'OFF' }}</li>
+    </ul>
+
+    <div class="top-actions">
+      {% if is_teacher %}<a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>{% endif %}
+      {% if is_admin %}<a class="glass-button" href="{{ url_for('admin_settings') }}">管理者設定</a>{% endif %}
+      <a class="glass-button" href="{{ url_for('app_index') }}">一覧へ戻る</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>管理者ホーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../static/adminstyle.css">
+</head>
+<body>
+<div class="page-shell">
+  <section class="glass-panel">
+    <h1>管理者ホーム</h1>
+    <p>画像管理・UUID制御・ログ管理・ニックネーム検索</p>
+    <div class="btn-wrap" style="margin-bottom:12px;">
+      <a class="download-btn" href="{{ url_for('admin_settings') }}">管理者設定</a>
+      <a class="download-btn" href="{{ url_for('settings') }}">共通設定</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-list">
+        {% for msg in messages %}
+          <li>{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-kpi">
+      <div class="kpi-card"><span>教科フォルダ</span><strong>{{ total_subjects }}</strong></div>
+      <div class="kpi-card"><span>画像総数</span><strong>{{ total_images }}</strong></div>
+      <div class="kpi-card"><span>ロック中UUID</span><strong>{{ access_control.locked_accounts|length }}</strong></div>
+    </div>
+
+    <div class="admin-grid-two">
+      <section class="panel-sub">
+        <h2>画像アップロード</h2>
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload" />
+          <label>教科（フォルダ名）</label>
+          <input type="text" name="subject" list="subject-list" placeholder="例: science" required>
+          <datalist id="subject-list">
+            {% for s in subjects %}
+            <option value="{{ s }}"></option>
+            {% endfor %}
+          </datalist>
+          <label>ファイル</label>
+          <input type="file" name="file" required>
+          <button type="submit">アップロード</button>
+        </form>
+      </section>
+
+      <section class="panel-sub">
+        <h2>画像削除</h2>
+        <form method="post">
+          <input type="hidden" name="action" value="delete_file" />
+          <label>削除するファイル（教科/ファイル名）</label>
+          <select name="delete">
+            {% for f in boards %}
+            <option value="{{ f }}">{{ f }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">削除</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="panel-sub">
+      <h2>UUIDアクセス制御（出禁・許可・コメント禁止・ロック）</h2>
+      <form method="post">
+        <label>対象UUID</label>
+        <input type="text" name="target_uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        <div class="btn-wrap">
+          <button type="submit" name="action" value="ban_uuid">出禁</button>
+          <button type="submit" name="action" value="unban_uuid">出禁解除</button>
+          <button type="submit" name="action" value="allow_uuid">許可追加</button>
+          <button type="submit" name="action" value="disallow_uuid">許可削除</button>
+          <button type="submit" name="action" value="comment_ban_uuid">コメント禁止</button>
+          <button type="submit" name="action" value="comment_unban_uuid">コメント禁止解除</button>
+          <button type="submit" name="action" value="lock_uuid">一時ロック</button>
+          <button type="submit" name="action" value="unlock_uuid">ロック解除</button>
+        </div>
+      </form>
+      <form method="post">
+        <button type="submit" name="action" value="toggle_allowlist">許可リスト制限: {{ 'ON' if access_control.allowlist_enabled else 'OFF' }}</button>
+      </form>
+
+      <div class="admin-grid-two">
+        <div><h3>出禁UUID</h3><ul>{% for u in access_control.banned %}<li>{{ u }}</li>{% else %}<li>なし</li>{% endfor %}</ul></div>
+        <div><h3>許可UUID</h3><ul>{% for u in access_control.allowlist %}<li>{{ u }}</li>{% else %}<li>なし</li>{% endfor %}</ul></div>
+        <div><h3>コメント禁止UUID</h3><ul>{% for u in access_control.comment_banned %}<li>{{ u }}</li>{% else %}<li>なし</li>{% endfor %}</ul></div>
+        <div><h3>一時ロックUUID</h3><ul>{% for u in access_control.locked_accounts %}<li>{{ u }}{% if access_control.incident_counts.get(u) %}（{{ access_control.incident_counts.get(u) }}回）{% endif %}</li>{% else %}<li>なし</li>{% endfor %}</ul></div>
+      </div>
+    </section>
+
+    <div class="admin-grid-two">
+      <section class="panel-sub">
+        <h2>監査ログ</h2>
+        <a class="download-btn" href="{{ url_for('admin_logs_download') }}">監査ログをダウンロード（audit_log.jsonl）</a>
+      </section>
+
+      <section class="panel-sub">
+        <h2>ニックネーム検索</h2>
+        <form method="get">
+          <input type="text" name="nickname_query" value="{{ nickname_query }}" placeholder="ニックネームで検索">
+          <button type="submit">検索</button>
+        </form>
+        <ul>
+          {% for r in nickname_results %}
+          <li>{{ r.nickname }} / {{ r.uuid }} / 変更{{ r.change_count }}回</li>
+          {% else %}
+          <li>該当なし（検索語を入力してください）</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <section class="panel-sub">
+      <h2>管理者用 写真ビューア</h2>
+      <input id="admin-folder-search" placeholder="教科フォルダ検索" />
+      <div id="admin-folder-container" class="folder-grid"></div>
+      <div id="admin-image-container" class="image-grid" style="display:none;"></div>
+      <button id="admin-back" type="button" style="display:none; margin-top:8px;">← 教科一覧に戻る</button>
+
+      <div id="admin-image-modal" class="modal" style="display:none;">
+        <div class="modal-card">
+          <button id="admin-close-modal" type="button">閉じる</button>
+          <img id="admin-modal-img" src="" alt="管理者プレビュー" />
+        </div>
+      </div>
+    </section>
+
+    <a href="{{ url_for('app_index') }}">← 一覧に戻る</a>
+  </section>
+</div>
+
+<script>
+const adminFolderData = {{ folders|tojson|safe }};
+const folderWrap = document.getElementById('admin-folder-container');
+const imageWrap = document.getElementById('admin-image-container');
+const search = document.getElementById('admin-folder-search');
+const backBtn = document.getElementById('admin-back');
+const modal = document.getElementById('admin-image-modal');
+const modalImg = document.getElementById('admin-modal-img');
+
+function renderAdminFolders(query='') {
+  folderWrap.innerHTML = '';
+  const rows = Object.entries(adminFolderData)
+    .filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => a[0].localeCompare(b[0]));
+
+  if (!rows.length) {
+    folderWrap.innerHTML = '<p>該当フォルダなし</p>';
+    return;
+  }
+
+  rows.forEach(([name, files]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = `${name} (${files.length})`;
+    btn.onclick = () => openAdminFolder(name);
+    folderWrap.appendChild(btn);
+  });
+}
+
+function openAdminFolder(name) {
+  imageWrap.innerHTML = '';
+  const files = adminFolderData[name] || [];
+  files.forEach(file => {
+    const card = document.createElement('div');
+    card.className = 'image-card';
+    card.innerHTML = `<img src="/blackboards/${name}/${file}" alt="${file}">`;
+    card.onclick = () => {
+      modalImg.src = `/blackboards/${name}/${file}`;
+      modal.style.display = 'flex';
+    };
+    imageWrap.appendChild(card);
+  });
+  folderWrap.style.display = 'none';
+  imageWrap.style.display = 'grid';
+  backBtn.style.display = 'inline-block';
+}
+
+backBtn.addEventListener('click', () => {
+  folderWrap.style.display = 'grid';
+  imageWrap.style.display = 'none';
+  backBtn.style.display = 'none';
+});
+search.addEventListener('input', (e) => renderAdminFolders(e.target.value));
+document.getElementById('admin-close-modal').addEventListener('click', () => {
+  modal.style.display = 'none';
+  modalImg.src = '';
+});
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) {
+    modal.style.display = 'none';
+    modalImg.src = '';
+  }
+});
+renderAdminFolders();
+</script>
+</body>
+</html>
