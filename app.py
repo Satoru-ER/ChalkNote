@@ -3,6 +3,8 @@ import os
 import random
 import re
 import uuid
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 
@@ -38,6 +40,11 @@ AUDIT_LOG_FILE = 'audit_log.jsonl'
 APP_NAME = 'BlackBoard-app-Beta-'
 APP_VERSION = 'Stable Ver1.0'
 APP_RELEASE_DATE = '2026-02-15'
+
+AI_API_BASE = os.environ.get('AI_API_BASE', 'https://api.x.ai/v1').rstrip('/')
+AI_API_MODEL = os.environ.get('AI_API_MODEL', 'grok-4-latest')
+AI_API_KEY = os.environ.get('AI_API_KEY', '').strip()
+AI_API_TIMEOUT = int(os.environ.get('AI_API_TIMEOUT', '20'))
 
 LOCK_THRESHOLD = 3
 MAX_NICKNAME_CHANGES = 5
@@ -216,6 +223,19 @@ def list_blackboard_entries():
     return sorted(entries)
 
 
+def build_image_entry(folder_name: str, rel_path: str):
+    """表示用の画像情報を1件生成する。"""
+    rel_path = rel_path.replace('\\', '/')
+    served_path = rel_path if folder_name == '未分類' else f'{folder_name}/{rel_path}'
+    served_path = served_path.replace('\\', '/')
+    comment_key = f'{folder_name}/{rel_path}'
+    return {
+        'name': rel_path,
+        'url': url_for('blackboard_file', filename=served_path),
+        'comment_key': comment_key,
+    }
+
+
 def build_folders_data():
     """教科フォルダ + 直下ファイル(未分類)をまとめて返す。"""
     folders = {}
@@ -223,9 +243,16 @@ def build_folders_data():
 
     for folder_name in list_blackboard_subjects():
         folder_path = os.path.join(BLACKBOARD_FOLDER, folder_name)
-        files = sorted([name for name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, name))])
-        folders[folder_name] = files
-        total_images += len(files)
+        rel_files = []
+        for root, _, filenames in os.walk(folder_path):
+            for name in filenames:
+                abs_path = os.path.join(root, name)
+                rel_path = os.path.relpath(abs_path, folder_path).replace('\\', '/')
+                rel_files.append(rel_path)
+        rel_files = sorted(rel_files)
+        entries = [build_image_entry(folder_name, rel_path) for rel_path in rel_files]
+        folders[folder_name] = entries
+        total_images += len(entries)
 
     # 旧構成互換: blackboards直下にある画像ファイルを「未分類」として表示
     root_files = sorted([
@@ -233,8 +260,9 @@ def build_folders_data():
         if os.path.isfile(os.path.join(BLACKBOARD_FOLDER, name))
     ])
     if root_files:
-        folders['未分類'] = root_files
-        total_images += len(root_files)
+        root_entries = [build_image_entry('未分類', rel_path) for rel_path in root_files]
+        folders['未分類'] = root_entries
+        total_images += len(root_entries)
 
     return folders, total_images
 
@@ -300,6 +328,151 @@ def contains_abusive_text(text: str) -> bool:
         if re.search(pattern, text, flags=re.IGNORECASE):
             return True
     return False
+
+
+def should_auto_reply_by_ai(text: str) -> bool:
+    """質問系コメントに対して軽量AI自動返信を有効化する。"""
+    marks = ('?', '？')
+    triggers = ('ai', 'AI', '教えて', 'どう', 'なぜ', 'なんで', 'できますか', '可能ですか')
+    lowered = text.lower()
+    return any(m in text for m in marks) or any(t.lower() in lowered for t in triggers)
+
+
+def generate_lightweight_ai_reply(question: str, image_key: str, rows: list[dict]) -> str:
+    """低スペック端末向けのルールベース自動返信。"""
+    active_rows = [r for r in rows if not r.get('deleted')]
+    recent = active_rows[-3:]
+    recent_text = ' / '.join(r.get('text', '') for r in recent if r.get('text'))[:120]
+
+    if 'いつ' in question or '何時' in question:
+        hint = '時刻は写真撮影タイミングとコメント履歴をご確認ください。'
+    elif 'どこ' in question:
+        hint = '教科フォルダ名と画像名を確認し、必要なら管理者に配置先を確認してください。'
+    elif 'なぜ' in question or 'なんで' in question:
+        hint = '原因特定には板書内容と直近コメントの文脈確認が有効です。'
+    else:
+        hint = '画像内容と既存コメントを確認して、要点を整理してみてください。'
+
+    if recent_text:
+        return f"質問ありがとうございます。画像キー: {image_key}。直近コメント要点: {recent_text}。{hint}"
+    return f"質問ありがとうございます。画像キー: {image_key}。{hint}"
+
+
+def build_lightweight_ai_summary(image_key: str, rows: list[dict]) -> dict:
+    """画像説明（要点）と要約を返す。"""
+    try:
+        subject, rel = image_key.split('/', 1)
+    except ValueError:
+        subject, rel = '不明', image_key
+
+    active_rows = [r for r in rows if not r.get('deleted')]
+    comment_count = len(active_rows)
+    latest = active_rows[-5:]
+    keywords = []
+    for row in latest:
+        txt = row.get('text', '').strip()
+        if txt:
+            keywords.append(txt[:24])
+    key_summary = ' / '.join(keywords[:3]) if keywords else 'コメントはまだ少ない状態です。'
+
+    explanation = (
+        f"この画像は教科フォルダ『{subject}』内の『{rel}』です。"
+        f"現在の有効コメント数は {comment_count} 件です。"
+    )
+    summary = f"要点: {key_summary}"
+    return {'explanation': explanation, 'summary': summary}
+
+
+def external_ai_enabled() -> bool:
+    return bool(AI_API_KEY)
+
+
+def external_ai_chat(system_prompt: str, user_prompt: str):
+    if not external_ai_enabled():
+        return None
+
+    payload = {
+        'model': AI_API_MODEL,
+        'messages': [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': user_prompt},
+        ],
+        'temperature': 0.2,
+        'stream': False,
+    }
+    body = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        f"{AI_API_BASE}/chat/completions",
+        data=body,
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {AI_API_KEY}',
+        },
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=AI_API_TIMEOUT) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            choices = data.get('choices', [])
+            if not choices:
+                return None
+            message = choices[0].get('message', {})
+            content = message.get('content', '')
+            if isinstance(content, list):
+                return ''.join(part.get('text', '') for part in content if isinstance(part, dict)).strip() or None
+            if isinstance(content, str):
+                return content.strip() or None
+            return None
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        return None
+
+
+def generate_ai_reply(question: str, image_key: str, rows: list[dict]) -> str:
+    """外部API優先でAI返信を生成し、失敗時は軽量ローカルへフォールバック。"""
+    fallback = generate_lightweight_ai_reply(question, image_key, rows)
+
+    recent = [r.get('text', '') for r in rows if not r.get('deleted')][-5:]
+    recent_text = '\n'.join(f'- {t}' for t in recent if t) or '- (なし)'
+    system_prompt = 'あなたは学校現場向けの短く丁寧な日本語アシスタントです。120文字以内で回答してください。'
+    user_prompt = (
+        f"画像キー: {image_key}\n"
+        f"質問: {question}\n"
+        f"最近のコメント:\n{recent_text}\n"
+        '上記を参考に、具体的で短い回答を返してください。'
+    )
+    reply = external_ai_chat(system_prompt, user_prompt)
+    return reply or fallback
+
+
+def build_ai_summary(image_key: str, rows: list[dict]) -> dict:
+    """外部API優先で説明/要約を生成し、失敗時は軽量ローカルへフォールバック。"""
+    fallback = build_lightweight_ai_summary(image_key, rows)
+
+    recent = [r.get('text', '') for r in rows if not r.get('deleted')][-8:]
+    recent_text = '\n'.join(f'- {t}' for t in recent if t) or '- (なし)'
+    system_prompt = (
+        'あなたは黒板写真管理アプリの説明アシスタントです。'
+        'JSONのみを返してください。キーは explanation と summary。'
+    )
+    user_prompt = (
+        f"画像キー: {image_key}\n"
+        f"コメント履歴:\n{recent_text}\n"
+        'この画像の説明(explanation)と要点要約(summary)を日本語で簡潔に出力してください。'
+    )
+    raw = external_ai_chat(system_prompt, user_prompt)
+    if not raw:
+        return fallback
+
+    try:
+        parsed = json.loads(raw)
+        explanation = str(parsed.get('explanation', '')).strip()
+        summary = str(parsed.get('summary', '')).strip()
+        if explanation and summary:
+            return {'explanation': explanation, 'summary': summary}
+    except json.JSONDecodeError:
+        pass
+    return fallback
 
 
 @app.before_request
@@ -674,11 +847,44 @@ def comments_add():
             'deleted': False,
         }
     )
+
+    ai_replied = False
+    if should_auto_reply_by_ai(text):
+        ai_text = generate_ai_reply(text, image_key, comments[image_key])
+        comments[image_key].append(
+            {
+                'author_uuid': 'ai-assistant',
+                'author_nickname': 'AIアシスタント',
+                'text': ai_text,
+                'created_at': now_iso(),
+                'deleted': False,
+                'ai_generated': True,
+            }
+        )
+        ai_replied = True
+
     save_json_file(COMMENTS_FILE, comments)
     log_operation('comment_add', True, image_key)
-    return jsonify({'ok': True})
+    if ai_replied:
+        log_operation('ai_auto_reply', True, image_key)
+    return jsonify({'ok': True, 'ai_replied': ai_replied})
 
 
+
+
+@app.route('/api/ai/summary', methods=['GET'])
+@login_required
+def ai_summary():
+    image_key = request.args.get('image', '').strip()
+    if '/' not in image_key:
+        return jsonify({'ok': False, 'error': 'imageが不正です'}), 400
+
+    comments = load_json_file(COMMENTS_FILE, {})
+    rows = comments.get(image_key, [])
+    data = build_ai_summary(image_key, rows)
+    api_mode = 'external' if external_ai_enabled() else 'local'
+    log_operation('ai_summary', True, f"{image_key} mode={api_mode}")
+    return jsonify({'ok': True, 'mode': api_mode, **data})
 
 
 @app.route('/settings')

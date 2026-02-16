@@ -165,12 +165,12 @@ function renderAdminFolders(query='') {
 function openAdminFolder(name) {
   imageWrap.innerHTML = '';
   const files = adminFolderData[name] || [];
-  files.forEach(file => {
+  files.forEach(item => {
     const card = document.createElement('div');
     card.className = 'image-card';
-    card.innerHTML = `<img src="/blackboards/${name}/${file}" alt="${file}">`;
+    card.innerHTML = `<img src="${item.url}" alt="${item.name}">`;
     card.onclick = () => {
-      modalImg.src = `/blackboards/${name}/${file}`;
+      modalImg.src = item.url;
       modal.style.display = 'flex';
     };
     imageWrap.appendChild(card);

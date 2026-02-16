@@ -64,6 +64,14 @@
 
         <div id="comment-section">
             <h3>コメント</h3>
+            <div class="top-actions" style="margin: 0 0 8px;">
+                <button type="button" id="ai-summary-btn" class="glass-button">AI説明・要点まとめ</button>
+            </div>
+            <div id="ai-summary-box" class="quick-help" style="display:none; margin:0 0 10px;">
+                <strong>AI説明・要約</strong> <small id="ai-mode" class="folder-meta"></small>
+                <p id="ai-explanation" class="folder-meta" style="margin:6px 0;"></p>
+                <p id="ai-summary" class="folder-meta" style="margin:6px 0;"></p>
+            </div>
             <ul id="comment-list" class="comment-list"></ul>
             <form id="comment-form">
                 <input id="comment-text" class="search-bar" placeholder="コメントを入力（300文字まで）" maxlength="300" required />
@@ -86,6 +94,11 @@ const fullImg = document.getElementById("full-img");
 const commentList = document.getElementById("comment-list");
 const commentForm = document.getElementById("comment-form");
 const commentText = document.getElementById("comment-text");
+const aiSummaryBtn = document.getElementById("ai-summary-btn");
+const aiSummaryBox = document.getElementById("ai-summary-box");
+const aiExplanation = document.getElementById("ai-explanation");
+const aiSummary = document.getElementById("ai-summary");
+const aiMode = document.getElementById("ai-mode");
 
 const LAST_FOLDER_KEY = "chalkly-last-folder";
 let activeImageKey = null;
@@ -121,11 +134,11 @@ function openFolder(folderName){
     if (images.length === 0) {
       tileContainer.innerHTML = '<div class="empty-state">この教科フォルダには画像がありません。</div>';
     } else {
-      images.forEach(file => {
+      images.forEach(item => {
           const tile = document.createElement("div");
           tile.className = "tile";
-          tile.innerHTML = `<img src="/blackboards/${folderName}/${file}" alt="${file}">`;
-          tile.onclick = () => openFullImage(folderName, file);
+          tile.innerHTML = `<img src="${item.url}" alt="${item.name}">`;
+          tile.onclick = () => openFullImage(item);
           tileContainer.appendChild(tile);
       });
     }
@@ -158,11 +171,32 @@ async function loadComments(imageKey) {
     ).join('');
 }
 
-function openFullImage(folder, file){
-    activeImageKey = `${folder}/${file}`;
-    fullImg.src = `/blackboards/${folder}/${file}`;
-    fullImg.alt = file;
+
+async function loadAiSummary(imageKey) {
+    aiSummaryBox.style.display = 'block';
+    aiExplanation.textContent = '読み込み中...';
+    aiSummary.textContent = '';
+    aiMode.textContent = '';
+    const res = await fetch(`/api/ai/summary?image=${encodeURIComponent(imageKey)}`);
+    const json = await res.json();
+    if (!json.ok) {
+        aiExplanation.textContent = json.error || 'AI要約の取得に失敗しました。';
+        return;
+    }
+    aiExplanation.textContent = json.explanation || '';
+    aiSummary.textContent = json.summary || '';
+    aiMode.textContent = json.mode ? `(mode: ${json.mode})` : ''; 
+}
+
+function openFullImage(item){
+    activeImageKey = item.comment_key;
+    fullImg.src = item.url;
+    fullImg.alt = item.name;
     modal.style.display = "flex";
+    aiSummaryBox.style.display = "none";
+    aiExplanation.textContent = "";
+    aiSummary.textContent = "";
+    aiMode.textContent = "";
     loadComments(activeImageKey);
 }
 
@@ -197,6 +231,7 @@ commentForm.addEventListener('submit', async (e) => {
 searchInput.addEventListener("input", (e) => renderFolders(e.target.value));
 btnBack.addEventListener("click", goHome);
 btnHome.addEventListener("click", goHome);
+aiSummaryBtn.addEventListener("click", () => { if (activeImageKey) loadAiSummary(activeImageKey); });
 document.getElementById("close-modal").addEventListener("click", closeFullImage);
 modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
