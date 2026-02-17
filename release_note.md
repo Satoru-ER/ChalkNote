@@ -1,10 +1,10 @@
-# Release Note - Stable Ver1.0
+# Release Note - Chalkly Canary Ver0.9.1
 
 ## リリース概要
-Canary期間のフィードバックを反映し、**Stable Ver1.0** として公開可能な状態へ調整しました。
+Canary期間のフィードバックを反映し、**Chalkly Canary Ver0.9.1** として公開可能な状態へ調整しました。
 
-## Stable向けの主な調整
-- アプリバージョン表記を `Stable Ver1.0` に更新。
+## Canary Ver0.9.1 向けの主な調整
+- アプリバージョン表記を `Chalkly Canary Ver0.9.1` に更新。
 - 本番向け設定を追加。
   - `APP_SECRET_KEY` の環境変数対応（未設定のまま本番起動を防止）
   - `FLASK_DEBUG` の環境変数制御（デフォルトOFF）
@@ -23,7 +23,7 @@ Canary期間のフィードバックを反映し、**Stable Ver1.0** として�
 - `credentials.json` は平文PINのため、将来はハッシュ化移行を推奨します。
 
 
-## Stable公開向け最終調整（運用性）
+## Canary公開向け最終調整（運用性）
 - `python app.py` 単体で起動できるように、起動時の必須環境変数チェックを緩和。
 - `APP_HOST` / `APP_PORT` 環境変数で公開先を切り替え可能に。
 - `requirements.txt` を追加し、依存導入手順を固定化。

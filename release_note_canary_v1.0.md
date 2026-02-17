@@ -1,7 +1,7 @@
-# Canary Ver1.0 Release Note
+# Chalkly Canary Ver0.9.1 Release Note
 
 ## リリース名
-**Canary Ver1.0**
+**Chalkly Canary Ver0.9.1**
 
 ## リリース日
 2026-02-15

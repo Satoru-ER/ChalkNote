@@ -1,4 +1,4 @@
-# BlackBoard-app-Beta- (Stable Ver1.0)
+# Chalkly - Canary Ver0.9.1
 
 黒板写真を教科ごとに管理・閲覧し、コメント共有や管理者制御を行うWebアプリです。
 

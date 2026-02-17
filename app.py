@@ -37,8 +37,8 @@ ACCESS_CONTROL_FILE = 'access_control.json'
 NICKNAMES_FILE = 'nicknames.json'
 AUDIT_LOG_FILE = 'audit_log.jsonl'
 
-APP_NAME = 'BlackBoard-app-Beta-'
-APP_VERSION = 'Stable Ver1.0'
+APP_NAME = 'Chalkly'
+APP_VERSION = 'Chalkly Canary Ver0.9.1'
 APP_RELEASE_DATE = '2026-02-15'
 
 AI_API_BASE = os.environ.get('AI_API_BASE', 'https://api.x.ai/v1').rstrip('/')
