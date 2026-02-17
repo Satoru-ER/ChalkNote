@@ -117,7 +117,9 @@ function renderFolders(query = "") {
     entries.forEach(([folderName, files]) => {
         const tile = document.createElement("button");
         tile.className = "folder-tile";
+        const preview = files.length ? `<img class="folder-thumb" src="${files[0].url}" alt="${folderName} preview">` : '<div class="folder-thumb empty">No Image</div>';
         tile.innerHTML = `
+            ${preview}
             <span class="folder-name">${folderName}</span>
             <span class="folder-meta">${files.length} 件の画像</span>
         `;
@@ -236,7 +238,11 @@ document.getElementById("close-modal").addEventListener("click", closeFullImage)
 modal.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
 
-renderFolders();
+try {
+    renderFolders();
+} catch (err) {
+    folderContainer.innerHTML = `<div class="empty-state">表示の初期化に失敗しました: ${err.message}</div>`;
+}
 
 const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
 if (lastFolder && folderData[lastFolder]) {
