@@ -1,0 +1,179 @@
+ :root {
+  --text: #f3f7ff;
+  --muted: #c4d0ea;
+  --glass-bg: linear-gradient(130deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 55%, rgba(255, 255, 255, 0.04));
+  --glass-border: rgba(255, 255, 255, 0.58);
+  --glass-shine: rgba(255, 255, 255, 0.68);
+}
+
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  color: var(--text);
+  background:
+  radial-gradient(1200px 520px at -10% -15%, rgba(140, 190, 255, .36), transparent 62%),
+  radial-gradient(900px 460px at 110% 0%, rgba(117, 172, 255, .25), transparent 58%),
+  linear-gradient(160deg, #253b69, #0a1222);
+}
+
+.page-shell {
+  width: min(1120px, 94vw);
+  margin: 20px auto;
+}
+
+.glass-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(24px) saturate(185%);
+  -webkit-backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 24px 56px rgba(3, 8, 24, 0.52);
+  padding: 16px;
+}
+
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.04) 42%),
+    radial-gradient(500px 160px at 14% -14%, rgba(255, 255, 255, .58), transparent 70%);
+  opacity: .78;
+  z-index: -1;
+}
+
+.glass-panel::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.2);
+}
+
+h1, h2, h3, p { margin-top: 0; }
+
+.admin-grid-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-sub {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+}
+
+.admin-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kpi-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.13);
+  padding: 10px;
+}
+
+.kpi-card span { display: block; color: var(--muted); font-size: .9rem; }
+.kpi-card strong { font-size: 1.2rem; }
+
+form { display: grid; gap: 9px; margin-bottom: 12px; }
+
+input, select, button, .download-btn, textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.12));
+  color: var(--text);
+  box-shadow: inset 0 1px 0 var(--glass-shine), 0 10px 24px rgba(3, 8, 20, 0.34), 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+button { cursor: pointer; }
+button:hover, .download-btn:hover { background: rgba(255, 255, 255, 0.28); text-decoration: none; }
+
+.btn-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+a { color: #eef5ff; }
+.download-btn { text-decoration: none; display: inline-block; }
+
+.flash-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.flash-list li {
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 238, 177, 0.2);
+}
+
+.folder-grid,
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.folder-grid { margin-bottom: 10px; }
+
+.image-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.image-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 8, 20, 0.72);
+}
+
+.modal-card {
+  width: min(94vw, 900px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: rgba(18, 27, 48, 0.9);
+  padding: 12px;
+}
+
+.modal-card img {
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}

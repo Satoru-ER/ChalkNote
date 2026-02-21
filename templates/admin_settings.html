@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>管理者設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../static/adminstyle.css">
+</head>
+<body>
+<div class="page-shell">
+  <section class="glass-panel">
+    <h1>管理者設定</h1>
+    <p>運用に必要な情報と操作を1画面に整理しています。</p>
+
+    <div class="admin-kpi">
+      <div class="kpi-card"><span>アプリ名</span><strong>{{ app_name }}</strong></div>
+      <div class="kpi-card"><span>バージョン</span><strong>{{ app_version }}</strong></div>
+      <div class="kpi-card"><span>リリース日</span><strong>{{ app_release_date }}</strong></div>
+      <div class="kpi-card"><span>許可リスト</span><strong>{{ 'ON' if allowlist_enabled else 'OFF' }}</strong></div>
+    </div>
+
+    <h2>制御サマリー</h2>
+    <div class="admin-grid-two">
+      <div class="panel-sub"><h3>出禁</h3><p>{{ banned_count }} 件</p></div>
+      <div class="panel-sub"><h3>コメント禁止</h3><p>{{ comment_banned_count }} 件</p></div>
+      <div class="panel-sub"><h3>一時ロック</h3><p>{{ locked_count }} 件</p></div>
+      <div class="panel-sub"><h3>インシデント記録UUID</h3><p>{{ incident_count }} 件</p></div>
+      <div class="panel-sub"><h3>許可リストUUID</h3><p>{{ allowlist_count }} 件</p></div>
+    </div>
+
+    <h2>クイック操作</h2>
+    <div class="btn-wrap">
+      <a class="download-btn" href="{{ url_for('admin_logs_download') }}">監査ログをダウンロード</a>
+      <a class="download-btn" href="{{ url_for('admin_home') }}">管理者ホームへ</a>
+      <a class="download-btn" href="{{ url_for('settings') }}">共通設定へ</a>
+      <a class="download-btn" href="{{ url_for('nickname_setup', next=url_for('admin_settings')) }}">ニックネーム変更</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>
