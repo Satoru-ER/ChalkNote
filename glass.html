@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>65537-ish Glass</title>
+<style>
+  body { margin:0; background:#000; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
+import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/RGBELoader.js";
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+camera.position.z = 3;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+pmremGenerator.compileEquirectangularShader();
+
+// 環境マップ（必須）
+new RGBELoader().load(
+  "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr",
+  (tex) => {
+    const envMap = pmremGenerator.fromEquirectangular(tex).texture;
+    scene.environment = envMap;
+    tex.dispose();
+    pmremGenerator.dispose();
+  }
+);
+
+// 見た目だけ超多面体
+const geo = new THREE.IcosahedronGeometry(1, 6); // 約65kポリゴン
+const mat = new THREE.MeshPhysicalMaterial({
+  transmission: 1,
+  thickness: 1.2,
+  roughness: 0,
+  metalness: 0,
+  ior: 1.52,
+  envMapIntensity: 1,
+  clearcoat: 1,
+  clearcoatRoughness: 0,
+});
+
+const mesh = new THREE.Mesh(geo, mat);
+scene.add(mesh);
+
+function animate() {
+  requestAnimationFrame(animate);
+  mesh.rotation.y += 0.003;
+  mesh.rotation.x += 0.002;
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(devicePixelRatio);
+});
+</script>
+</body>
+</html>
