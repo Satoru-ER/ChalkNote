@@ -46,7 +46,7 @@ AI_API_MODEL = os.environ.get('AI_API_MODEL', 'grok-4-latest')
 AI_API_KEY = os.environ.get('AI_API_KEY', '').strip()
 AI_API_TIMEOUT = int(os.environ.get('AI_API_TIMEOUT', '20'))
 
-LOCK_THRESHOLD = 3
+LOCK_THRESHOLD = 5
 MAX_NICKNAME_CHANGES = 5
 NICKNAME_CHANGE_INTERVAL_DAYS = 7
 
