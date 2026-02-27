@@ -2,65 +2,296 @@
 <html>
 <head>
     <title>黒板アプリ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../static/style.css">
-    <script type="module" crossorigin src="https://glass.danilofiumi.com/web-comps/boundle.js"></script>
 </head>
 <body>
-<h1>黒板写真一覧</h1>
+<div class="page-shell">
+    <header class="page-header glass-panel">
+        <h1>黒板写真一覧</h1>
+        <p>教科別に写真を探して、すばやく確認できます。</p>
 
-<div id="folder-container">
-    {% for folder in folders %}
-        <div class="folder-tile" onclick="openFolder('{{ folder }}')">{{ folder }}</div>
-    {% endfor %}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">教科フォルダ数</span>
+                <strong class="stat-value">{{ total_subjects }}</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">登録画像数</span>
+                <strong class="stat-value">{{ total_images }}</strong>
+            </div>
+        </div>
+
+        <details class="quick-help">
+            <summary>使い方（UXガイド）</summary>
+            <ul>
+                <li>検索欄で教科名を絞り込みできます。</li>
+                <li>画像表示中は「Esc」キーでも閉じられます。</li>
+                <li>画像にコメントを残して情報共有できます。</li>
+            </ul>
+        </details>
+
+        <div class="top-actions">
+            {% if is_admin %}
+            <a class="glass-button" href="{{ url_for('admin_home') }}">管理者ホーム</a>
+            {% endif %}
+            {% if is_teacher %}
+            <a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>
+            {% endif %}
+            <a class="glass-button" href="{{ url_for('settings') }}">設定</a>
+            <a class="glass-button" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
+            <a class="glass-button" href="{{ url_for('logout') }}">ログアウト</a>
+        </div>
+    </header>
+
+    <section class="glass-panel" style="padding:16px;">
+        <input id="folder-search" class="search-bar" placeholder="教科フォルダを検索（例: science）" />
+        <div id="folder-container"></div>
+        <div id="tile-container" style="display:none;"></div>
+        <p id="path-indicator" class="folder-meta" style="margin: 12px 0 0; display:none;"></p>
+    </section>
+
+    <div id="button-layer">
+        <button class="glass-button" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
+        <button class="glass-button" id="btnhome">🏠 ホーム</button>
+    </div>
 </div>
 
-<div id="tile-container" style="display:none;"></div>
+<div id="full-image-view">
+    <div class="modal-card glass-panel">
+        <button id="close-modal" class="glass-button">閉じる</button>
+        <img id="full-img" src="" alt="黒板画像">
 
-<div id="full-image-view" style="display:none;">
-    <span onclick="closeFullImage()" style="cursor:pointer;position:absolute;top:10px;right:20px;font-size:30px;color:white;">×</span>
-    <img id="full-img" src="" style="max-width:90%; max-height:90%;">
+        <div id="comment-section">
+            <h3>コメント</h3>
+            <div class="top-actions" style="margin: 0 0 8px;">
+                <button type="button" id="ai-summary-btn" class="glass-button">AI説明・要点まとめ</button>
+            </div>
+            <div id="ai-summary-box" class="quick-help" style="display:none; margin:0 0 10px;">
+                <strong>AI説明・要約</strong> <small id="ai-mode" class="folder-meta"></small>
+                <p id="ai-explanation" class="folder-meta" style="margin:6px 0;"></p>
+                <p id="ai-summary" class="folder-meta" style="margin:6px 0;"></p>
+            </div>
+            <ul id="comment-list" class="comment-list"></ul>
+            <form id="comment-form">
+                <input id="comment-text" class="search-bar" placeholder="コメントを入力（300文字まで）" maxlength="300" required />
+                <button type="submit" class="glass-button">投稿</button>
+            </form>
+        </div>
+    </div>
 </div>
-
-<div id="button-layer">
-    <sv-liquid-glass class="liquid-btn" id="btnback" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"←","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnhome" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"🏠️","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnfolder" styles='{"style":{"roundness":60,"padding_x":10,"padding_y":1},"text":{"content":"blackboards/science","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btnsettings" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"⚙","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-    <sv-liquid-glass class="liquid-btn" id="btninfo" styles='{"style":{"roundness":60,"padding_x":1,"padding_y":1},"text":{"content":"I","edit":false,"font_family":"Inter","size_weight":500,"font_size":3.5},"color":{"accent":"#D7DADD"}}' contrast="light"></sv-liquid-glass>
-</div>
-
-<a href="{{ url_for('admin') }}">ICT係専用ページへ</a>
 
 <script>
-const folderData = {{ folders|tojson|safe }};
+const folderData = {{ folders|tojson|safe }} || {};
 
-function openFolder(folderName){
+function buildEncodedBlackboardUrl(path) {
+    return `/blackboards/${String(path || '')
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/')}`;
+}
+
+function normalizeImageItem(raw, folderName) {
+    if (raw && typeof raw === 'object') {
+        const name = raw.name || '';
+        const commentKey = raw.comment_key || `${folderName}/${name}`;
+        if (raw.url) {
+            return { name, url: raw.url, comment_key: commentKey };
+        }
+        if (name) {
+            const rel = folderName === '未分類' ? name : `${folderName}/${name}`;
+            return { name, url: buildEncodedBlackboardUrl(rel), comment_key: commentKey };
+        }
+    }
+
+    if (typeof raw === 'string') {
+        const rel = raw.replace(/\\/g, '/');
+        const name = rel.split('/').pop() || rel;
+        const served = folderName === '未分類' ? rel : `${folderName}/${rel}`;
+        return {
+            name,
+            url: buildEncodedBlackboardUrl(served),
+            comment_key: `${folderName}/${rel}`,
+        };
+    }
+
+    return null;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const folderContainer = document.getElementById("folder-container");
     const tileContainer = document.getElementById("tile-container");
-    tileContainer.innerHTML = "";
+    const searchInput = document.getElementById("folder-search");
+    const btnBack = document.getElementById("btnback");
+    const btnHome = document.getElementById("btnhome");
+    const pathIndicator = document.getElementById("path-indicator");
+    const modal = document.getElementById("full-image-view");
+    const fullImg = document.getElementById("full-img");
+    const commentList = document.getElementById("comment-list");
+    const commentForm = document.getElementById("comment-form");
+    const commentText = document.getElementById("comment-text");
+    const aiSummaryBtn = document.getElementById("ai-summary-btn");
+    const aiSummaryBox = document.getElementById("ai-summary-box");
+    const aiExplanation = document.getElementById("ai-explanation");
+    const aiSummary = document.getElementById("ai-summary");
+    const aiMode = document.getElementById("ai-mode");
+    const closeModalBtn = document.getElementById("close-modal");
 
-    const images = folderData[folderName] || [];
+    const LAST_FOLDER_KEY = "chalkly-last-folder";
+    let activeImageKey = null;
 
-    images.forEach(file => {
-        const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.innerHTML = `<img src="/blackboards/${folderName}/${file}" style="width:100%;height:auto;">`;
-        tile.onclick = () => openFullImage(folderName, file);
-        tileContainer.appendChild(tile);
+    function renderFolders(query = "") {
+        folderContainer.innerHTML = "";
+        const entries = Object.entries(folderData)
+          .filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
+          .sort((a, b) => a[0].localeCompare(b[0]));
+
+        if (entries.length === 0) {
+            folderContainer.innerHTML = '<div class="empty-state">表示できるフォルダがありません。管理者が写真をアップロードすると表示されます。</div>';
+            return;
+        }
+
+        entries.forEach(([folderName, files]) => {
+            const normalizedFiles = (Array.isArray(files) ? files : [])
+                .map((item) => normalizeImageItem(item, folderName))
+                .filter(Boolean);
+            const tile = document.createElement("button");
+            tile.className = "folder-tile";
+            const preview = normalizedFiles.length
+                ? `<img class="folder-thumb" src="${normalizedFiles[0].url}" alt="${folderName} preview">`
+                : '<div class="folder-thumb empty">No Image</div>';
+            tile.innerHTML = `
+                ${preview}
+                <span class="folder-name">${folderName}</span>
+                <span class="folder-meta">${normalizedFiles.length} 件の画像</span>
+            `;
+            tile.onclick = () => openFolder(folderName);
+            folderContainer.appendChild(tile);
+        });
+    }
+
+    function openFolder(folderName) {
+        tileContainer.innerHTML = "";
+        const images = (Array.isArray(folderData[folderName]) ? folderData[folderName] : [])
+            .map((item) => normalizeImageItem(item, folderName))
+            .filter(Boolean);
+
+        if (images.length === 0) {
+            tileContainer.innerHTML = '<div class="empty-state">この教科フォルダには画像がありません。</div>';
+        } else {
+            images.forEach((item) => {
+                const tile = document.createElement("div");
+                tile.className = "tile";
+                tile.innerHTML = `<img src="${item.url}" alt="${item.name}">`;
+                tile.onclick = () => openFullImage(item);
+                tileContainer.appendChild(tile);
+            });
+        }
+
+        localStorage.setItem(LAST_FOLDER_KEY, folderName);
+        folderContainer.style.display = "none";
+        tileContainer.style.display = "grid";
+        btnBack.style.display = "inline-block";
+        pathIndicator.style.display = "block";
+        pathIndicator.textContent = `現在: blackboards/${folderName}`;
+    }
+
+    function goHome() {
+        folderContainer.style.display = "grid";
+        tileContainer.style.display = "none";
+        btnBack.style.display = "none";
+        pathIndicator.style.display = "none";
+    }
+
+    async function loadComments(imageKey) {
+        commentList.innerHTML = '<li class="folder-meta">読み込み中...</li>';
+        const res = await fetch(`/api/comments?image=${encodeURIComponent(imageKey)}`);
+        const rows = await res.json();
+        if (!rows.length) {
+            commentList.innerHTML = '<li class="folder-meta">まだコメントはありません。</li>';
+            return;
+        }
+        commentList.innerHTML = rows.map(c =>
+          `<li><strong>${c.author_nickname || c.author_uuid}</strong>${c.deleted ? ' <em>(moderated)</em>' : ''}<br>${c.text}<br><small>${new Date(c.created_at).toLocaleString()}</small></li>`
+        ).join('');
+    }
+
+    async function loadAiSummary(imageKey) {
+        aiSummaryBox.style.display = 'block';
+        aiExplanation.textContent = '読み込み中...';
+        aiSummary.textContent = '';
+        aiMode.textContent = '';
+
+        const res = await fetch(`/api/ai/summary?image=${encodeURIComponent(imageKey)}`);
+        const json = await res.json();
+        if (!json.ok) {
+            aiExplanation.textContent = json.error || 'AI要約の取得に失敗しました。';
+            return;
+        }
+        aiExplanation.textContent = json.explanation || '';
+        aiSummary.textContent = json.summary || '';
+        aiMode.textContent = json.mode ? `(mode: ${json.mode})` : '';
+    }
+
+    function openFullImage(item) {
+        activeImageKey = item.comment_key;
+        fullImg.src = item.url;
+        fullImg.alt = item.name;
+        modal.style.display = "flex";
+        aiSummaryBox.style.display = "none";
+        aiExplanation.textContent = "";
+        aiSummary.textContent = "";
+        aiMode.textContent = "";
+        loadComments(activeImageKey);
+    }
+
+    function closeFullImage() {
+        modal.style.display = "none";
+        fullImg.src = "";
+        activeImageKey = null;
+    }
+
+    commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activeImageKey) return;
+
+        const formData = new URLSearchParams();
+        formData.set('image', activeImageKey);
+        formData.set('text', commentText.value.trim());
+
+        const res = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          alert(json.error || 'コメント投稿に失敗しました');
+          return;
+        }
+        commentText.value = '';
+        loadComments(activeImageKey);
     });
 
-    document.getElementById("folder-container").style.display = "none";
-    tileContainer.style.display = "flex";
-}
+    searchInput?.addEventListener("input", (e) => renderFolders(e.target.value));
+    btnBack?.addEventListener("click", goHome);
+    btnHome?.addEventListener("click", goHome);
+    aiSummaryBtn?.addEventListener("click", () => { if (activeImageKey) loadAiSummary(activeImageKey); });
+    closeModalBtn?.addEventListener("click", closeFullImage);
+    modal?.addEventListener("click", (e) => { if (e.target === modal) closeFullImage(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullImage(); });
 
-function openFullImage(folder, file){
-    const img = document.getElementById("full-img");
-    img.src = `/blackboards/${folder}/${file}`;
-    document.getElementById("full-image-view").style.display = "flex";
-}
+    try {
+        renderFolders();
+    } catch (err) {
+        folderContainer.innerHTML = `<div class="empty-state">表示の初期化に失敗しました: ${err.message}</div>`;
+    }
 
-function closeFullImage(){
-    document.getElementById("full-image-view").style.display = "none";
-}
+    const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
+    if (lastFolder && folderData[lastFolder]) {
+        openFolder(lastFolder);
+    }
+});
 </script>
 </body>
 </html>

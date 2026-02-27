@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+<div class="page-shell">
+  <section class="page-header glass-panel">
+    <h1>設定</h1>
+    <p>必要な情報だけをまとめた、通常ユーザー・先生向けの共通設定です。</p>
+  </section>
+
+  <section class="glass-panel" style="padding:16px;">
+    <div class="settings-grid">
+      <article class="stat-card">
+        <span class="stat-label">アプリ名</span>
+        <strong>{{ app_name }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">バージョン</span>
+        <strong>{{ app_version }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">リリース日</span>
+        <strong>{{ app_release_date }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">ロール</span>
+        <strong>{{ role }}</strong>
+      </article>
+    </div>
+
+    <h2>アカウント</h2>
+    <p>UUID: <code>{{ login_uuid }}</code></p>
+    <p>現在のニックネーム: <strong>{{ nickname_info.nickname if nickname_info else '未設定' }}</strong></p>
+    <p>残り変更回数: <strong>{{ nickname_status.remaining }}</strong></p>
+    {% if nickname_status.wait_days == -1 %}
+      <p>ニックネーム変更上限に達しています。</p>
+    {% elif not nickname_status.can_change %}
+      <p>次回変更可能まで: {{ nickname_status.wait_days }} 日</p>
+    {% endif %}
+
+    <h2>セキュリティ状態</h2>
+    <ul>
+      <li>一時ロック: {{ 'ON' if security_flags.locked else 'OFF' }}</li>
+      <li>コメント禁止: {{ 'ON' if security_flags.comment_banned else 'OFF' }}</li>
+      <li>出禁: {{ 'ON' if security_flags.banned else 'OFF' }}</li>
+    </ul>
+
+    <div class="top-actions">
+      <a class="glass-button" href="{{ url_for('nickname_setup', next=url_for('settings')) }}">ニックネーム変更</a>
+      {% if is_teacher %}<a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>{% endif %}
+      {% if is_admin %}<a class="glass-button" href="{{ url_for('admin_settings') }}">管理者設定</a>{% endif %}
+      <a class="glass-button" href="{{ url_for('app_index') }}">一覧へ戻る</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>
