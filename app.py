@@ -1104,6 +1104,8 @@ def nas():
 @app.route('/blackboards/<path:filename>')
 @login_required
 def blackboard_file(filename):
+    if not session.get('app_authenticated'):
+        return redirect(url_for('login', next=url_for('app_index')))
     return send_from_directory(BLACKBOARD_FOLDER, filename)
 
 
