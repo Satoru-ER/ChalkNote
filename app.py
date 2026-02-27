@@ -1,7 +1,11 @@
+import io
 import json
 import os
 import random
 import re
+import sqlite3
+import tempfile
+import threading
 import uuid
 import urllib.error
 import urllib.request
@@ -36,6 +40,11 @@ COMMENTS_FILE = 'comments.json'
 ACCESS_CONTROL_FILE = 'access_control.json'
 NICKNAMES_FILE = 'nicknames.json'
 AUDIT_LOG_FILE = 'audit_log.jsonl'
+SQLITE_DB_FILE = 'chalkly.db'
+
+# DB初期化/移行などの同時実行を避けるための排他ロック
+FILE_IO_LOCK = threading.RLock()
+STATE_JSON_KEYS = {CREDENTIALS_FILE, COMMENTS_FILE, ACCESS_CONTROL_FILE, NICKNAMES_FILE}
 
 APP_NAME = 'Chalkly'
 APP_VERSION = 'Chalkly Canary Ver0.9.1'
@@ -46,7 +55,7 @@ AI_API_MODEL = os.environ.get('AI_API_MODEL', 'grok-4-latest')
 AI_API_KEY = os.environ.get('AI_API_KEY', '').strip()
 AI_API_TIMEOUT = int(os.environ.get('AI_API_TIMEOUT', '20'))
 
-LOCK_THRESHOLD = 5
+LOCK_THRESHOLD = 3
 MAX_NICKNAME_CHANGES = 5
 NICKNAME_CHANGE_INTERVAL_DAYS = 7
 
@@ -64,6 +73,136 @@ os.makedirs(BLACKBOARD_FOLDER, exist_ok=True)
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def get_db_conn():
+    conn = sqlite3.connect(SQLITE_DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_sqlite():
+    with FILE_IO_LOCK:
+        conn = get_db_conn()
+        try:
+            conn.execute('PRAGMA journal_mode=WAL')
+            conn.execute('PRAGMA synchronous=NORMAL')
+            conn.execute(
+                'CREATE TABLE IF NOT EXISTS kv_json ('
+                'name TEXT PRIMARY KEY, '
+                'value TEXT NOT NULL, '
+                'updated_at TEXT NOT NULL'
+                ')'
+            )
+            conn.execute(
+                'CREATE TABLE IF NOT EXISTS audit_logs ('
+                'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+                'time TEXT NOT NULL, '
+                'payload TEXT NOT NULL'
+                ')'
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def migrate_json_state_to_sqlite():
+    """既存JSON状態ファイルがあればSQLiteへ一度だけ移行する。"""
+    with FILE_IO_LOCK:
+        conn = get_db_conn()
+        try:
+            for json_name in STATE_JSON_KEYS:
+                row = conn.execute('SELECT 1 FROM kv_json WHERE name = ?', (json_name,)).fetchone()
+                if row:
+                    continue
+                if not os.path.exists(json_name):
+                    continue
+                try:
+                    with open(json_name, 'r', encoding='utf-8') as f:
+                        payload = json.dumps(json.load(f), ensure_ascii=False)
+                except (json.JSONDecodeError, OSError):
+                    continue
+                conn.execute(
+                    'INSERT OR REPLACE INTO kv_json(name, value, updated_at) VALUES (?, ?, ?)',
+                    (json_name, payload, now_iso()),
+                )
+
+            audit_exists = conn.execute('SELECT 1 FROM audit_logs LIMIT 1').fetchone()
+            if not audit_exists and os.path.exists(AUDIT_LOG_FILE):
+                try:
+                    with open(AUDIT_LOG_FILE, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            try:
+                                payload = json.loads(line)
+                            except json.JSONDecodeError:
+                                continue
+                            conn.execute(
+                                'INSERT INTO audit_logs(time, payload) VALUES (?, ?)',
+                                (payload.get('time', now_iso()), json.dumps(payload, ensure_ascii=False)),
+                            )
+                except OSError:
+                    pass
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def get_json_state(name: str):
+    conn = get_db_conn()
+    try:
+        row = conn.execute('SELECT value FROM kv_json WHERE name = ?', (name,)).fetchone()
+        if not row:
+            return None
+        try:
+            return json.loads(row['value'])
+        except json.JSONDecodeError:
+            return None
+    finally:
+        conn.close()
+
+
+def set_json_state(name: str, value) -> None:
+    payload = json.dumps(value, ensure_ascii=False)
+    conn = get_db_conn()
+    try:
+        conn.execute(
+            'INSERT OR REPLACE INTO kv_json(name, value, updated_at) VALUES (?, ?, ?)',
+            (name, payload, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def append_audit_row(event: dict) -> None:
+    conn = get_db_conn()
+    try:
+        conn.execute(
+            'INSERT INTO audit_logs(time, payload) VALUES (?, ?)',
+            (event.get('time', now_iso()), json.dumps(event, ensure_ascii=False)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def export_audit_log_text() -> str:
+    conn = get_db_conn()
+    try:
+        rows = conn.execute('SELECT payload FROM audit_logs ORDER BY id').fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        return ''
+    return '\n'.join(row['payload'] for row in rows) + '\n'
+
+
+def bootstrap_storage() -> None:
+    init_sqlite()
+    migrate_json_state_to_sqlite()
 
 
 def parse_iso(value: str):
@@ -88,24 +227,43 @@ def normalize_next_url(raw_next: str, fallback: str) -> str:
 
 
 def load_json_file(path: str, default_value):
-    if not os.path.exists(path):
-        return default_value
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return default_value
+    if path in STATE_JSON_KEYS:
+        data = get_json_state(path)
+        return default_value if data is None else data
+
+    with FILE_IO_LOCK:
+        if not os.path.exists(path):
+            return default_value
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return default_value
 
 
 def save_json_file(path: str, data) -> None:
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    if path in STATE_JSON_KEYS:
+        set_json_state(path, data)
+        return
+
+    base_dir = os.path.dirname(os.path.abspath(path)) or '.'
+    os.makedirs(base_dir, exist_ok=True)
+    with FILE_IO_LOCK:
+        fd, tmp_path = tempfile.mkstemp(prefix='.tmp-', suffix='.json', dir=base_dir)
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
 
 def append_audit_log(event: dict) -> None:
     event.setdefault('time', now_iso())
-    with open(AUDIT_LOG_FILE, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(event, ensure_ascii=False) + '\n')
+    append_audit_row(event)
 
 
 def log_operation(action: str, success: bool, detail: str = '', target_uuid: str = '') -> None:
@@ -123,6 +281,9 @@ def log_operation(action: str, success: bool, detail: str = '', target_uuid: str
             'ip': request.headers.get('X-Forwarded-For', request.remote_addr),
         }
     )
+
+
+bootstrap_storage()
 
 
 def generate_credential_entries(count: int, seed: int):
@@ -660,11 +821,9 @@ def admin():
 @app.route('/admin/logs/download')
 @admin_required
 def admin_logs_download():
-    if not os.path.exists(AUDIT_LOG_FILE):
-        with open(AUDIT_LOG_FILE, 'w', encoding='utf-8') as f:
-            f.write('')
+    payload = export_audit_log_text().encode('utf-8')
     log_operation('admin_download_logs', True)
-    return send_file(AUDIT_LOG_FILE, as_attachment=True, download_name='audit_log.jsonl')
+    return send_file(io.BytesIO(payload), mimetype='application/json', as_attachment=True, download_name='audit_log.jsonl')
 
 
 @app.route('/admin/home', methods=['GET', 'POST'])
@@ -955,4 +1114,14 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
     host = os.environ.get('APP_HOST', '0.0.0.0')
     port = int(os.environ.get('APP_PORT', '8080'))
-    app.run(host=host, port=port, debug=debug_mode)
+
+    if debug_mode:
+        app.run(host=host, port=port, debug=True)
+    else:
+        # python app.py の1コマンド運用でも同時接続耐性を上げるため waitress を優先
+        try:
+            from waitress import serve
+
+            serve(app, host=host, port=port, threads=int(os.environ.get('APP_THREADS', '8')))
+        except Exception:
+            app.run(host=host, port=port, debug=False, threaded=True)
