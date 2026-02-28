@@ -46,9 +46,9 @@ SQLITE_DB_FILE = 'chalkly.db'
 FILE_IO_LOCK = threading.RLock()
 STATE_JSON_KEYS = {CREDENTIALS_FILE, COMMENTS_FILE, ACCESS_CONTROL_FILE, NICKNAMES_FILE}
 
-APP_NAME = 'Chalkly'
-APP_VERSION = 'Chalkly Canary Ver0.9.1'
-APP_RELEASE_DATE = '2026-02-15'
+APP_NAME = 'ChalkNote'
+APP_VERSION = 'Canary Ver0.9.1'
+APP_RELEASE_DATE = '2026-03-01'
 
 AI_API_BASE = os.environ.get('AI_API_BASE', 'https://api.x.ai/v1').rstrip('/')
 AI_API_MODEL = os.environ.get('AI_API_MODEL', 'grok-4-latest')
@@ -478,7 +478,7 @@ def can_user_login(user_uuid: str) -> tuple[bool, str]:
     if user_uuid in ac['locked_accounts']:
         return False, 'このUUIDは一時ロック中です。管理者の許可が必要です。'
     if user_uuid in ac['banned']:
-        return False, 'このUUIDはアクセス停止（出禁）されています。'
+        return False, 'このUUIDはアクセス停止されています。'
     if ac['allowlist_enabled'] and user_uuid not in ac['allowlist']:
         return False, 'このUUIDは現在アクセス許可されていません。'
     return True, ''
