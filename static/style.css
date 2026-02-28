@@ -292,3 +292,7 @@ textarea::placeholder {
   .page-shell { width: 95vw; }
   .page-header { padding: 14px; }
 }
+
+.setup-bold {
+ font-weight: bold;
+}
