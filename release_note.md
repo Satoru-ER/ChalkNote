@@ -1,10 +1,10 @@
-# Release Note - Chalkly Canary Ver0.9.1
+# Release Note - ChalkNote Canary Ver0.9.3
 
 ## リリース概要
-Canary期間のフィードバックを反映し、**Chalkly Canary Ver0.9.3** として公開可能な状態へ調整しました。
+Canary期間のフィードバックを反映し、**ChalkNote Canary Ver0.9.3** として公開可能な状態へ調整しました。
 
-## Canary Ver0.9.3 向けの主な調整
-- アプリバージョン表記を `Chalkly Canary Ver0.9.3` に更新。
+## ChalkNote Ver0.9.3 向けの主な調整
+- アプリバージョン表記を `ChalkNote Canary Ver0.9.3` に更新。
 - 本番向け設定を追加。
   - `APP_SECRET_KEY` の環境変数対応（未設定のまま本番起動を防止）
   - `FLASK_DEBUG` の環境変数制御（デフォルトOFF）
