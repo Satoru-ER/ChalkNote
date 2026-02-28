@@ -1,10 +1,10 @@
 # Chalkly Canary Ver0.9.1 Release Note
 
 ## リリース名
-**Chalkly Canary Ver0.9.1**
+**Chalkly（仮称） Canary Ver0.9.3**
 
 ## リリース日
-2026-02-15
+2026-02-29
 
 ## ハイライト
 - UUID+PIN認証基盤を強化
