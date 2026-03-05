@@ -47,8 +47,8 @@ FILE_IO_LOCK = threading.RLock()
 STATE_JSON_KEYS = {CREDENTIALS_FILE, COMMENTS_FILE, ACCESS_CONTROL_FILE, NICKNAMES_FILE}
 
 APP_NAME = 'ChalkNote'
-APP_VERSION = 'Canary Ver0.9.1'
-APP_RELEASE_DATE = '2026-03-01'
+APP_VERSION = 'Canary Ver0.9.3'
+APP_RELEASE_DATE = '2026-03-05'
 
 AI_API_BASE = os.environ.get('AI_API_BASE', 'https://api.x.ai/v1').rstrip('/')
 AI_API_MODEL = os.environ.get('AI_API_MODEL', 'grok-4-latest')
