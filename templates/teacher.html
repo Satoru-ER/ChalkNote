@@ -7,13 +7,20 @@
 </head>
 <body>
 <div class="page-shell">
+    <header class="app-topbar">
+        <div>
+            <div class="brand-title">ChalkNote Teacher</div>
+            <div class="brand-subtitle">先生向けクイックメニュー</div>
+        </div>
+    </header>
+
     <section class="glass-panel">
         <h1>先生専用ページ</h1>
         <p>先生向けメニューです。</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <a href="{{ url_for('app_index') }}">← 一覧に戻る</a>
-            <a href="{{ url_for('settings') }}">設定</a>
-            <a href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
+        <div class="btn-wrap">
+            <a class="download-btn tonal" href="{{ url_for('app_index') }}">← 一覧に戻る</a>
+            <a class="download-btn" href="{{ url_for('settings') }}">設定</a>
+            <a class="download-btn tonal" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
         </div>
     </section>
 </div>
