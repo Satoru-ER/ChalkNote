@@ -7,6 +7,14 @@
 </head>
 <body>
 <div class="page-shell">
+  <header class="app-topbar">
+    <div>
+      <div class="brand-title">ChalkNote Admin Settings</div>
+      <div class="brand-subtitle">運用情報ダッシュボード</div>
+    </div>
+    <a class="download-btn tonal" href="{{ url_for('admin_home') }}">管理者ホームへ</a>
+  </header>
+
   <section class="glass-panel">
     <h1>管理者設定</h1>
     <p>運用に必要な情報と操作を1画面に整理しています。</p>
@@ -30,9 +38,9 @@
     <h2>クイック操作</h2>
     <div class="btn-wrap">
       <a class="download-btn" href="{{ url_for('admin_logs_download') }}">監査ログをダウンロード</a>
-      <a class="download-btn" href="{{ url_for('admin_home') }}">管理者ホームへ</a>
-      <a class="download-btn" href="{{ url_for('settings') }}">共通設定へ</a>
-      <a class="download-btn" href="{{ url_for('nickname_setup', next=url_for('admin_settings')) }}">ニックネーム変更</a>
+      <a class="download-btn tonal" href="{{ url_for('admin_home') }}">管理者ホームへ</a>
+      <a class="download-btn tonal" href="{{ url_for('settings') }}">共通設定へ</a>
+      <a class="download-btn tonal" href="{{ url_for('nickname_setup', next=url_for('admin_settings')) }}">ニックネーム変更</a>
     </div>
   </section>
 </div>
