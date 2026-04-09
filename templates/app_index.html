@@ -6,63 +6,60 @@
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-<div class="page-shell">
-    <header class="app-topbar">
-        <div>
-            <div class="brand-title">ChalkNote</div>
-            <div class="brand-subtitle">Blackboard Capture Hub</div>
-        </div>
-        <a class="pill-button tonal" href="{{ url_for('settings') }}">設定</a>
-    </header>
-
-    <header class="page-header glass-panel">
-        <h1>黒板写真一覧</h1>
-        <p>教科別に写真を探して、すばやく確認できます。</p>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-label">教科フォルダ数</span>
-                <strong class="stat-value">{{ total_subjects }}</strong>
+<div class="page-shell app-explorer-shell">
+    <div class="explorer-layout">
+        <aside class="side-rail glass-panel">
+            <div class="rail-brand">
+                <div class="brand-dot"></div>
+                <strong>ChalkNote</strong>
+                <small>Expressive UI</small>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">登録画像数</span>
-                <strong class="stat-value">{{ total_images }}</strong>
-            </div>
-        </div>
 
-        <details class="quick-help">
-            <summary>使い方（UXガイド）</summary>
-            <ul>
-                <li>検索欄で教科名を絞り込みできます。</li>
-                <li>画像表示中は「Esc」キーでも閉じられます。</li>
-                <li>画像にコメントを残して情報共有できます。</li>
-            </ul>
-        </details>
+            <nav class="rail-nav">
+                <a class="rail-item active" href="#" aria-current="page">📷 写真</a>
+                <a class="rail-item" href="{{ url_for('settings') }}">🔎 検索/設定</a>
+                {% if is_teacher %}<a class="rail-item" href="{{ url_for('teacher') }}">👩‍🏫 先生</a>{% endif %}
+                {% if is_admin %}<a class="rail-item" href="{{ url_for('admin_home') }}">🛠 管理</a>{% endif %}
+                <a class="rail-item" href="{{ url_for('nickname_setup') }}">🙂 ニックネーム</a>
+                <a class="rail-item" href="{{ url_for('logout') }}">🚪 ログアウト</a>
+            </nav>
+        </aside>
 
-        <div class="top-actions">
-            {% if is_admin %}
-            <a class="glass-button tonal" href="{{ url_for('admin_home') }}">管理者ホーム</a>
-            {% endif %}
-            {% if is_teacher %}
-            <a class="glass-button tonal" href="{{ url_for('teacher') }}">先生ページ</a>
-            {% endif %}
-            <a class="glass-button" href="{{ url_for('settings') }}">設定</a>
-            <a class="glass-button tonal" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
-            <a class="glass-button tonal" href="{{ url_for('logout') }}">ログアウト</a>
-        </div>
-    </header>
+        <main class="content-stage glass-panel">
+            <header class="page-header stage-header">
+                <h1>黒板写真一覧</h1>
+                <p>教科ごとに写真をすばやく確認できるギャラリーです。</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">教科フォルダ数</span>
+                        <strong class="stat-value">{{ total_subjects }}</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">登録画像数</span>
+                        <strong class="stat-value">{{ total_images }}</strong>
+                    </div>
+                </div>
+            </header>
 
-    <section class="glass-panel section-card">
-        <input id="folder-search" class="search-bar" placeholder="教科フォルダを検索（例: science）" />
-        <div id="folder-container"></div>
-        <div id="tile-container" style="display:none;"></div>
-        <p id="path-indicator" class="folder-meta" style="margin: 12px 0 0; display:none;"></p>
-    </section>
-
-    <div id="button-layer">
-        <button class="glass-button tonal" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
-        <button class="glass-button" id="btnhome">🏠 ホーム</button>
+            <section class="stage-gallery">
+                <div id="folder-container"></div>
+                <div id="tile-container" style="display:none;"></div>
+            </section>
+        </main>
     </div>
+
+    <section class="floating-command glass-panel">
+        <div class="floating-row">
+            <label for="folder-search" class="floating-label">検索</label>
+            <input id="folder-search" class="search-bar" placeholder="教科フォルダを検索（例: science）" />
+        </div>
+
+        <div class="floating-row floating-actions">
+            <button class="glass-button tonal" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
+            <button class="glass-button" id="btnhome">🏠 ホーム</button>
+            <p id="path-indicator" class="folder-meta" style="margin: 0; display:none;"></p>
+        </div>
+    </section>
 </div>
 
 <div id="full-image-view">
