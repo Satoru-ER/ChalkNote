@@ -7,6 +7,14 @@
 </head>
 <body>
 <div class="page-shell">
+  <header class="app-topbar">
+    <div>
+      <div class="brand-title">ChalkNote Admin</div>
+      <div class="brand-subtitle">レガシー管理ページ</div>
+    </div>
+    <a class="download-btn tonal" href="{{ url_for('app_index') }}">一覧へ戻る</a>
+  </header>
+
   <section class="glass-panel">
     <h1>ChalkNote管理者ページ</h1>
 
@@ -20,36 +28,42 @@
       {% endif %}
     {% endwith %}
 
-    <h2>アップロード</h2>
-    <form method="post" enctype="multipart/form-data">
-        <label>パスワード</label>
-        <input type="password" name="password" required>
+    <div class="admin-grid-two">
+      <section class="panel-sub">
+        <h2>アップロード</h2>
+        <form method="post" enctype="multipart/form-data">
+            <label>パスワード</label>
+            <input type="password" name="password" required>
 
-        <label>教科（フォルダ名）</label>
-        <input type="text" name="subject" list="subject-list" placeholder="例: science" required>
-        <datalist id="subject-list">
-          {% for s in subjects %}
-          <option value="{{ s }}"></option>
-          {% endfor %}
-        </datalist>
+            <label>教科（フォルダ名）</label>
+            <input type="text" name="subject" list="subject-list" placeholder="例: science" required>
+            <datalist id="subject-list">
+              {% for s in subjects %}
+              <option value="{{ s }}"></option>
+              {% endfor %}
+            </datalist>
 
-        <label>ファイル</label>
-        <input type="file" name="file">
-        <button type="submit">アップロード</button>
-    </form>
+            <label>ファイル</label>
+            <input type="file" name="file">
+            <button type="submit">アップロード</button>
+        </form>
+      </section>
 
-    <h2>削除</h2>
-    <form method="post">
-        <label>パスワード</label>
-        <input type="password" name="password" required>
-        <label>削除するファイル（教科/ファイル名）</label>
-        <select name="delete">
-            {% for f in boards %}
-            <option value="{{ f }}">{{ f }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">削除</button>
-    </form>
+      <section class="panel-sub">
+        <h2>削除</h2>
+        <form method="post">
+            <label>パスワード</label>
+            <input type="password" name="password" required>
+            <label>削除するファイル（教科/ファイル名）</label>
+            <select name="delete">
+                {% for f in boards %}
+                <option value="{{ f }}">{{ f }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="tonal">削除</button>
+        </form>
+      </section>
+    </div>
 
     <a href="{{ url_for('app_index') }}">← 一覧に戻る</a>
   </section>

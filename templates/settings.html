@@ -7,12 +7,20 @@
 </head>
 <body>
 <div class="page-shell">
+  <header class="app-topbar">
+    <div>
+      <div class="brand-title">ChalkNote Settings</div>
+      <div class="brand-subtitle">アカウントと利用状態の確認</div>
+    </div>
+    <a class="pill-button" href="{{ url_for('app_index') }}">一覧へ戻る</a>
+  </header>
+
   <section class="page-header glass-panel">
     <h1>設定</h1>
     <p>必要な情報だけをまとめた、通常ユーザー・先生向けの共通設定です。</p>
   </section>
 
-  <section class="glass-panel" style="padding:16px;">
+  <section class="glass-panel section-card">
     <div class="settings-grid">
       <article class="stat-card">
         <span class="stat-label">アプリ名</span>
@@ -37,7 +45,7 @@
     <p>現在のニックネーム: <strong>{{ nickname_info.nickname if nickname_info else '未設定' }}</strong></p>
     <p>残り変更回数: <strong>{{ nickname_status.remaining }}</strong></p>
     {% if nickname_status.wait_days == -1 %}
-      <p>ニックネーム変更上限に達しています。</p>
+      <p class="warning-banner">ニックネーム変更上限に達しています。</p>
     {% elif not nickname_status.can_change %}
       <p>次回変更可能まで: {{ nickname_status.wait_days }} 日</p>
     {% endif %}
@@ -51,9 +59,9 @@
 
     <div class="top-actions">
       <a class="glass-button" href="{{ url_for('nickname_setup', next=url_for('settings')) }}">ニックネーム変更</a>
-      {% if is_teacher %}<a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>{% endif %}
-      {% if is_admin %}<a class="glass-button" href="{{ url_for('admin_settings') }}">管理者設定</a>{% endif %}
-      <a class="glass-button" href="{{ url_for('app_index') }}">一覧へ戻る</a>
+      {% if is_teacher %}<a class="glass-button tonal" href="{{ url_for('teacher') }}">先生ページ</a>{% endif %}
+      {% if is_admin %}<a class="glass-button tonal" href="{{ url_for('admin_settings') }}">管理者設定</a>{% endif %}
+      <a class="glass-button tonal" href="{{ url_for('app_index') }}">一覧へ戻る</a>
     </div>
   </section>
 </div>

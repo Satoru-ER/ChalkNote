@@ -7,6 +7,14 @@
 </head>
 <body>
 <div class="page-shell">
+    <header class="app-topbar">
+        <div>
+            <div class="brand-title">ChalkNote</div>
+            <div class="brand-subtitle">Blackboard Capture Hub</div>
+        </div>
+        <a class="pill-button tonal" href="{{ url_for('settings') }}">設定</a>
+    </header>
+
     <header class="page-header glass-panel">
         <h1>黒板写真一覧</h1>
         <p>教科別に写真を探して、すばやく確認できます。</p>
@@ -33,18 +41,18 @@
 
         <div class="top-actions">
             {% if is_admin %}
-            <a class="glass-button" href="{{ url_for('admin_home') }}">管理者ホーム</a>
+            <a class="glass-button tonal" href="{{ url_for('admin_home') }}">管理者ホーム</a>
             {% endif %}
             {% if is_teacher %}
-            <a class="glass-button" href="{{ url_for('teacher') }}">先生ページ</a>
+            <a class="glass-button tonal" href="{{ url_for('teacher') }}">先生ページ</a>
             {% endif %}
             <a class="glass-button" href="{{ url_for('settings') }}">設定</a>
-            <a class="glass-button" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
-            <a class="glass-button" href="{{ url_for('logout') }}">ログアウト</a>
+            <a class="glass-button tonal" href="{{ url_for('nickname_setup') }}">ニックネーム変更</a>
+            <a class="glass-button tonal" href="{{ url_for('logout') }}">ログアウト</a>
         </div>
     </header>
 
-    <section class="glass-panel" style="padding:16px;">
+    <section class="glass-panel section-card">
         <input id="folder-search" class="search-bar" placeholder="教科フォルダを検索（例: science）" />
         <div id="folder-container"></div>
         <div id="tile-container" style="display:none;"></div>
@@ -52,14 +60,14 @@
     </section>
 
     <div id="button-layer">
-        <button class="glass-button" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
+        <button class="glass-button tonal" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
         <button class="glass-button" id="btnhome">🏠 ホーム</button>
     </div>
 </div>
 
 <div id="full-image-view">
     <div class="modal-card glass-panel">
-        <button id="close-modal" class="glass-button">閉じる</button>
+        <button id="close-modal" class="glass-button tonal">閉じる</button>
         <img id="full-img" src="" alt="黒板画像">
 
         <div id="comment-section">
