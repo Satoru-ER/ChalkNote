@@ -7,45 +7,63 @@
 </head>
 <body>
 <div class="page-shell app-explorer-shell">
-    <div class="explorer-layout">
-        <aside class="side-rail glass-panel">
-            <div class="rail-brand">
-                <div class="brand-dot"></div>
-                <strong>ChalkNote</strong>
-                <small>Expressive UI</small>
-            </div>
-
-            <nav class="rail-nav">
-                <a class="rail-item active" href="#" aria-current="page">📷 写真</a>
-                <a class="rail-item" href="{{ url_for('settings') }}">🔎 検索/設定</a>
-                {% if is_teacher %}<a class="rail-item" href="{{ url_for('teacher') }}">👩‍🏫 先生</a>{% endif %}
-                {% if is_admin %}<a class="rail-item" href="{{ url_for('admin_home') }}">🛠 管理</a>{% endif %}
-                <a class="rail-item" href="{{ url_for('nickname_setup') }}">🙂 ニックネーム</a>
-                <a class="rail-item" href="{{ url_for('logout') }}">🚪 ログアウト</a>
-            </nav>
-        </aside>
-
-        <main class="content-stage glass-panel">
-            <header class="page-header stage-header">
-                <h1>黒板写真一覧</h1>
-                <p>教科ごとに写真をすばやく確認できるギャラリーです。</p>
-                <div class="stats-grid">
+    <div class="drive-shell glass-panel">
+        <main class="drive-stage">
+            <header class="drive-header">
+                <div class="drive-title">
+                    <h1>黒板写真ナビ</h1>
+                    <p>Material 3 Expressive を取り入れたドライブ風ビュー</p>
+                </div>
+                <div class="drive-stats">
                     <div class="stat-card">
-                        <span class="stat-label">教科フォルダ数</span>
+                        <span class="stat-label">教科フォルダ</span>
                         <strong class="stat-value">{{ total_subjects }}</strong>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">登録画像数</span>
+                        <span class="stat-label">登録画像</span>
                         <strong class="stat-value">{{ total_images }}</strong>
                     </div>
                 </div>
             </header>
 
-            <section class="stage-gallery">
-                <div id="folder-container"></div>
-                <div id="tile-container" style="display:none;"></div>
+            <section class="map-canvas">
+                <div class="route-strip glass-panel">
+                    <div class="route-chip">Gallery Drive</div>
+                    <div class="route-steps">黒板写真一覧 → 教科フォルダ → 画像確認</div>
+                    <div id="view-state" class="route-distance">フォルダ一覧</div>
+                </div>
+
+                <div class="stage-split">
+                    <div class="map-pane">
+                        <div id="folder-container"></div>
+                        <div id="tile-container" style="display:none;"></div>
+                    </div>
+                    <aside class="turn-pane">
+                        <div class="turn-pane-head">
+                            <strong id="turn-title">フォルダを選択</strong>
+                            <small id="turn-subtitle">選択中フォルダの情報を表示します</small>
+                        </div>
+                        <div class="turn-distance"><span id="path-indicator" class="folder-meta" style="display:none;"></span></div>
+                    </aside>
+                </div>
             </section>
         </main>
+
+        <aside class="side-rail">
+            <div class="rail-brand">
+                <div class="brand-dot"></div>
+                <strong>ChalkNote</strong>
+                <small>Expressive UI</small>
+            </div>
+            <nav class="rail-nav">
+                <a class="rail-item active" href="#" aria-current="page" title="写真">📷</a>
+                <a class="rail-item" href="{{ url_for('settings') }}" title="検索/設定">🔎</a>
+                {% if is_teacher %}<a class="rail-item" href="{{ url_for('teacher') }}" title="先生">👩‍🏫</a>{% endif %}
+                {% if is_admin %}<a class="rail-item" href="{{ url_for('admin_home') }}" title="管理">🛠</a>{% endif %}
+                <a class="rail-item" href="{{ url_for('nickname_setup') }}" title="ニックネーム">🙂</a>
+                <a class="rail-item" href="{{ url_for('logout') }}" title="ログアウト">🚪</a>
+            </nav>
+        </aside>
     </div>
 
     <section class="floating-command glass-panel">
@@ -57,7 +75,6 @@
         <div class="floating-row floating-actions">
             <button class="glass-button tonal" id="btnback" style="display:none;">← 教科一覧へ戻る</button>
             <button class="glass-button" id="btnhome">🏠 ホーム</button>
-            <p id="path-indicator" class="folder-meta" style="margin: 0; display:none;"></p>
         </div>
     </section>
 </div>
@@ -130,6 +147,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnBack = document.getElementById("btnback");
     const btnHome = document.getElementById("btnhome");
     const pathIndicator = document.getElementById("path-indicator");
+    const viewState = document.getElementById("view-state");
+    const turnTitle = document.getElementById("turn-title");
+    const turnSubtitle = document.getElementById("turn-subtitle");
     const modal = document.getElementById("full-image-view");
     const fullImg = document.getElementById("full-img");
     const commentList = document.getElementById("comment-list");
@@ -173,6 +193,9 @@ window.addEventListener('DOMContentLoaded', () => {
             tile.onclick = () => openFolder(folderName);
             folderContainer.appendChild(tile);
         });
+        turnTitle.textContent = "フォルダを選択";
+        turnSubtitle.textContent = `${entries.length} 件の教科フォルダがあります`;
+        viewState.textContent = "フォルダ一覧";
     }
 
     function openFolder(folderName) {
@@ -199,6 +222,9 @@ window.addEventListener('DOMContentLoaded', () => {
         btnBack.style.display = "inline-block";
         pathIndicator.style.display = "block";
         pathIndicator.textContent = `現在: blackboards/${folderName}`;
+        turnTitle.textContent = folderName;
+        turnSubtitle.textContent = `${images.length} 枚の画像`;
+        viewState.textContent = "画像一覧";
     }
 
     function goHome() {
@@ -206,6 +232,9 @@ window.addEventListener('DOMContentLoaded', () => {
         tileContainer.style.display = "none";
         btnBack.style.display = "none";
         pathIndicator.style.display = "none";
+        turnTitle.textContent = "フォルダを選択";
+        turnSubtitle.textContent = "選択中フォルダの情報を表示します";
+        viewState.textContent = "フォルダ一覧";
     }
 
     async function loadComments(imageKey) {
